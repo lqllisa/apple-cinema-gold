@@ -309,7 +309,157 @@
   }
 
 
-  var NAV_CSS = "\n/* Champagne glass 1.4. No settings window geometry changes. */\nbody.appletv-agnative-topnav.lmp-cinema-hero.lmp-cinema-gold-noir {\n --acg-text:#f4eee7;--acg-metal:#d5c1a2;--acg-dim:#bdb1a4;--acg-glow:rgba(217,191,151,.12);\n}\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .menu__item.focus,\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .settings-folder.focus,\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .settings-param.focus,\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .selectbox-item.focus {\n background:linear-gradient(100deg,rgba(216,197,170,.84),rgba(180,161,137,.72)) !important;\n color:#201e1b !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 4px 14px rgba(0,0,0,.15) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__inner,\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-rightdock {\n background:rgba(29,31,34,.42) !important;border:1px solid rgba(234,216,189,.14) !important;\n backdrop-filter:blur(22px) saturate(105%) !important;-webkit-backdrop-filter:blur(22px) saturate(105%) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 10px 26px rgba(0,0,0,.12) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__item.focus,\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__item.is-active {\n background:rgba(216,197,170,.26) !important;color:#f9f2e7 !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.18) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero {\n background:#0d1014 !important;border-radius:0 !important;box-shadow:none !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero::before {\n background:linear-gradient(90deg,rgba(9,12,16,.88) 0%,rgba(10,13,17,.59) 27%,rgba(10,13,17,.06) 66%,transparent 89%) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero::after {\n height:59% !important;background:linear-gradient(180deg,transparent 0%,rgba(10,12,15,.11) 38%,rgba(11,13,16,.95) 100%) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__title {\n color:#f0e8de !important;letter-spacing:.085em !important;font-weight:400 !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__overview {\n color:rgba(243,236,227,.82) !important;font-weight:400 !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__meta {\n display:block !important;font-size:.86em !important;color:#d3c3ae !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.selector::after {\n content:\"Подробнее\" !important;left:17em !important;bottom:4.35em !important;\n border-radius:1.25em !important;\n color:#eee5d8 !important;font-weight:500 !important;letter-spacing:.02em !important;\n background:linear-gradient(115deg,rgba(118,110,101,.32),rgba(43,45,48,.43)) !important;\n border:1px solid rgba(236,220,199,.24) !important;\n backdrop-filter:blur(22px) saturate(105%) !important;-webkit-backdrop-filter:blur(22px) saturate(105%) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.21),0 7px 18px rgba(0,0,0,.17) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.focus::after {\n border-color:rgba(248,230,204,.5) !important;box-shadow:0 0 0 2px rgba(236,218,187,.18) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__indicator.active {\n background:#ddcdb9 !important;\n}\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button {\n background:linear-gradient(110deg,rgba(102,96,88,.32),rgba(43,46,50,.42)) !important;\n color:#e9e0d7 !important;border:1px solid rgba(231,213,187,.25) !important;\n border-radius:1.3em !important;backdrop-filter:blur(20px) saturate(105%) !important;\n -webkit-backdrop-filter:blur(20px) saturate(105%) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 7px 18px rgba(0,0,0,.14) !important;\n}\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button.button--play {\n background:linear-gradient(115deg,rgba(224,211,193,.79),rgba(182,165,143,.67)) !important;\n color:#29241e !important;\n}\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button.focus {\n border-color:rgba(243,226,202,.78) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 0 0 2px rgba(235,214,181,.18) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .items-line .card__view {\n border-radius:.95em !important;box-shadow:0 7px 23px rgba(0,0,0,.16) !important;\n}\n";
+  var NAV_CSS = "\n/* Champagne glass 1.4. No settings window geometry changes. */\nbody.appletv-agnative-topnav.lmp-cinema-hero.lmp-cinema-gold-noir {\n --acg-text:#f4eee7;--acg-metal:#d5c1a2;--acg-dim:#bdb1a4;--acg-glow:rgba(217,191,151,.12);\n}\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .menu__item.focus,\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .settings-folder.focus,\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .settings-param.focus,\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .selectbox-item.focus {\n background:linear-gradient(100deg,rgba(216,197,170,.84),rgba(180,161,137,.72)) !important;\n color:#201e1b !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 4px 14px rgba(0,0,0,.15) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__inner,\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-rightdock {\n background:rgba(29,31,34,.42) !important;border:1px solid rgba(234,216,189,.14) !important;\n backdrop-filter:blur(22px) saturate(105%) !important;-webkit-backdrop-filter:blur(22px) saturate(105%) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 10px 26px rgba(0,0,0,.12) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__item.focus,\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__item.is-active {\n background:rgba(216,197,170,.26) !important;color:#f9f2e7 !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.18) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero {\n background:#0d1014 !important;border-radius:0 !important;box-shadow:none !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero::before {\n background:linear-gradient(90deg,rgba(9,12,16,.88) 0%,rgba(10,13,17,.59) 27%,rgba(10,13,17,.06) 66%,transparent 89%) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero::after {\n height:59% !important;background:linear-gradient(180deg,transparent 0%,rgba(10,12,15,.11) 38%,rgba(11,13,16,.95) 100%) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__title {\n color:#f0e8de !important;letter-spacing:.085em !important;font-weight:400 !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__overview {\n color:rgba(243,236,227,.82) !important;font-weight:400 !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__meta {\n display:block !important;font-size:.86em !important;color:#d3c3ae !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.selector::after {\n content:\"Подробнее\" !important;left:17em !important;bottom:4.35em !important;\n border-radius:1.25em !important;\n color:#eee5d8 !important;font-weight:500 !important;letter-spacing:.02em !important;\n background:linear-gradient(115deg,rgba(118,110,101,.32),rgba(43,45,48,.43)) !important;\n border:1px solid rgba(236,220,199,.24) !important;\n backdrop-filter:blur(22px) saturate(105%) !important;-webkit-backdrop-filter:blur(22px) saturate(105%) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.21),0 7px 18px rgba(0,0,0,.17) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.focus::after {\n border-color:rgba(248,230,204,.5) !important;box-shadow:0 0 0 2px rgba(236,218,187,.18) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__indicator.active {\n background:#ddcdb9 !important;\n}\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button {\n background:linear-gradient(110deg,rgba(102,96,88,.32),rgba(43,46,50,.42)) !important;\n color:#e9e0d7 !important;border:1px solid rgba(231,213,187,.25) !important;\n border-radius:1.3em !important;backdrop-filter:blur(20px) saturate(105%) !important;\n -webkit-backdrop-filter:blur(20px) saturate(105%) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 7px 18px rgba(0,0,0,.14) !important;\n}\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button.button--play {\n background:linear-gradient(115deg,rgba(224,211,193,.79),rgba(182,165,143,.67)) !important;\n color:#29241e !important;\n}\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button.focus {\n border-color:rgba(243,226,202,.78) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 0 0 2px rgba(235,214,181,.18) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .items-line .card__view {\n border-radius:.95em !important;box-shadow:0 7px 23px rgba(0,0,0,.16) !important;\n}\n\n\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell{\n left:5.6em !important;transform:none !important;\n width:calc(100vw - 19.4em) !important;max-width:calc(100vw - 19.4em) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__inner{\n width:100% !important;max-width:100% !important;overflow:hidden !important;display:flex !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__items{\n flex:1 1 auto !important;min-width:0 !important;overflow-x:auto !important;overflow-y:hidden !important;\n justify-content:flex-start !important;scrollbar-width:none;overscroll-behavior-x:contain;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__items::-webkit-scrollbar{display:none;}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__items>.agnative-topnav-shell__item{\n flex-shrink:0 !important;white-space:nowrap !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__right{flex-shrink:0 !important;}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__item[data-role=\"favorite\"],\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__item[data-role=\"settings\"],\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-clock{display:none !important;}\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-refresh{display:inline-flex !important;align-items:center;justify-content:center;}\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-refresh svg{width:1.1em !important;height:1.1em !important;stroke:currentColor;}\nbody.lmp-cinema-hero .agnative-leftdock__item.acg-moved-to-top{display:none !important;}\n@media(max-width:1000px){\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell{\n left:4.5em !important;width:calc(100vw - 15.2em) !important;max-width:calc(100vw - 15.2em) !important;}\n}\n";
+
+  var topnavLastSelection = '';
+  var navSyncTimeout = null;
+  var navWatchers = [];
+  var navSyncRuns = 0;
+  function nativeClick(n) {
+    if(!n)return false;
+    try{
+      if(window.$){window.$(n).trigger('hover:enter');return true;}
+      if(typeof n.click==='function'){n.click();return true;}
+    }catch(err){}
+    return false;
+  }
+  function bindCinemaAction(n,handler){
+    if(!n||n.__acgBound)return;
+    n.__acgBound=true;
+    n.addEventListener('click',function(e){if(e){e.preventDefault();e.stopPropagation();}handler();});
+    n.addEventListener('keydown',function(e){if(e&&(e.key==='Enter'||e.key===' ')){e.preventDefault();handler();}});
+    try{if(window.$)window.$(n).on('hover:enter.acg',handler);}catch(err){}
+  }
+  function syncTopCategories(){
+    if(!enabled()||!document.querySelectorAll)return;
+    var menu=document.querySelector('.menu');if(!menu)return;
+    var original=Array.prototype.slice.call(menu.querySelectorAll('.menu__item.selector[data-action]'));
+    var specs=[
+      {actions:['cartoon'],re:/мультфильм|мультики/i,defaultAction:'cartoon'},
+      {actions:['movie'],re:/^фильмы$/i,defaultAction:'movie'},
+      {actions:['tv'],re:/^сериалы$/i,defaultAction:'tv'},
+      {actions:['dorama','doramas'],re:/дорам/i},
+      {actions:['catalog','catalogue'],re:/каталог/i},
+      {actions:['filter','filters'],re:/фильтр/i},
+      {actions:['favorite','bookmarks'],re:/избранн|закладки/i}
+    ];
+    var chosen=[],seen={};
+    specs.forEach(function(spec){
+      var action='';
+      for(var i=0;i<original.length;i++){
+        var node=original[i],code=node.getAttribute('data-action')||'';
+        var label=(node.textContent||'').trim();
+        if(spec.actions.indexOf(code)>=0||spec.re.test(label)){action=code;break;}
+      }
+      if(!action&&spec.defaultAction)action=spec.defaultAction;
+      if(action&&!seen[action]){chosen.push(action);seen[action]=true;}
+    });
+    var serialized=JSON.stringify(chosen);
+    if(chosen.length&&serialized!==topnavLastSelection){
+      topnavLastSelection=serialized;
+      set('appletv_agnative_topnav_items',chosen);
+    }
+  }
+  function addRefresh(){
+    var target=document.querySelector('.agnative-topnav-shell__right');
+    if(!target||target.querySelector('.acg-refresh'))return;
+    var n=document.createElement('div');
+    n.className='agnative-topnav-shell__item agnative-topnav-shell__item--icon selector acg-refresh';
+    n.setAttribute('data-role','refresh');n.setAttribute('data-selector','true');
+    n.setAttribute('tabindex','0');n.setAttribute('title','Обновить Lampa');
+    n.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.5 9a7 7 0 0 1 12-3l2 1M18.5 15a7 7 0 0 1-12 3l-2-1"/></svg>';
+    bindCinemaAction(n,function(){
+      try{
+        if(Lampa.Activity&&typeof Lampa.Activity.reload==='function'){Lampa.Activity.reload();return;}
+        if(window.location&&typeof window.location.reload==='function')window.location.reload();
+      }catch(err){}
+    });
+    target.appendChild(n);
+  }
+  function keyboardToSidebar(){
+    var menu=document.querySelector('.menu');if(!menu)return;
+    var nodes=document.querySelectorAll('.head [title],.head [aria-label]');
+    var original=null;
+    for(var i=0;i<nodes.length;i++){
+      var n=nodes[i],name=((n.getAttribute('title')||'')+' '+(n.getAttribute('aria-label')||'')).toLowerCase();
+      if(/(?:remote|удал[её]нн).*(?:keyboard|клавиат)|(?:keyboard|клавиат).*(?:remote|удал[её]нн)/i.test(name)){
+        original=n.closest&&n.closest('.head__action')||n;break;
+      }
+    }
+    if(!original)return; // Unknown remote keyboard plugin: do not hide a potentially vital control.
+    var link=menu.querySelector('.acg-remote-menu-link');
+    if(!link){
+      var group=menu.querySelector('.menu__case');if(!group)return;
+      link=document.createElement('div');
+      link.className='menu__item selector acg-remote-menu-link';
+      link.setAttribute('data-action','acg-remote-keyboard');
+      link.setAttribute('data-selector','true');link.setAttribute('tabindex','0');
+      link.innerHTML='<div class="menu__ico">⌨</div><div class="menu__text">Remote-клавиатура</div>';
+      bindCinemaAction(link,function(){nativeClick(original);});
+      group.appendChild(link);
+    }
+    original.style.display='none';
+  }
+  function hideMovedSidebarItems(){
+    var dock=document.querySelector('.agnative-leftdock');
+    var top=document.querySelector('.agnative-topnav-shell__items');
+    if(!dock||!top)return;
+    var moved={};
+    Array.prototype.slice.call(top.querySelectorAll('.agnative-topnav-shell__item[data-action]')).forEach(function(x){
+      moved[x.getAttribute('data-action')]=true;
+    });
+    Array.prototype.slice.call(dock.querySelectorAll('.agnative-leftdock__item[data-action]')).forEach(function(x){
+      var hidden=!!moved[x.getAttribute('data-action')];
+      if(hidden&&!x.classList.contains('acg-moved-to-top'))x.classList.add('acg-moved-to-top');
+      if(!hidden&&x.classList.contains('acg-moved-to-top'))x.classList.remove('acg-moved-to-top');
+    });
+  }
+  function scrollFocusedTab(){
+    var wrap=document.querySelector('.agnative-topnav-shell__items');
+    if(!wrap||wrap.__acgScrollBound)return;
+    wrap.__acgScrollBound=true;
+    wrap.addEventListener('focusin',function(e){
+      try{e.target.scrollIntoView({block:'nearest',inline:'nearest'});}catch(err){}
+    });
+    try{
+      if(window.$)window.$(wrap).on('hover:focus.acg', '.agnative-topnav-shell__item',function(){
+        try{this.scrollIntoView({block:'nearest',inline:'nearest'});}catch(err){}
+      });
+    }catch(err){}
+  }
+  function syncNavigation(){
+    if(!enabled()||!document.body)return;
+    try{syncTopCategories();addRefresh();keyboardToSidebar();hideMovedSidebarItems();scrollFocusedTab();}
+    catch(err){try{console.warn('[Apple Cinema Gold] Navigation:',err);}catch(ignore){}}
+  }
+  function queueNavigation(){
+    if(navSyncTimeout)return;
+    navSyncTimeout=setTimeout(function(){navSyncTimeout=null;syncNavigation();},200);
+  }
+  function watchNavigation(){
+    if(!enabled()||typeof MutationObserver!=='function')return;
+    var targets=[document.querySelector('.menu'),document.querySelector('.head'),document.querySelector('.agnative-leftdock')];
+    targets.forEach(function(node){
+      if(!node||node.__acgObserved)return;
+      node.__acgObserved=true;
+      var obs=new MutationObserver(queueNavigation);
+      obs.observe(node,{childList:true,subtree:true});
+      navWatchers.push(obs);
+    });
+  }
+  function beginNavigation(){
+    if(!enabled())return;
+    syncNavigation();watchNavigation();
+    if(navSyncRuns>0)return;
+    var attempts=0;
+    var timer=setInterval(function(){
+      attempts++;
+      if(!enabled()||attempts>=18)clearInterval(timer);
+      else{syncNavigation();watchNavigation();}
+    },700);
+    navSyncRuns=1;
+  }
+
   function injectNavStyle(){if(document.getElementById(NAV_STYLE_ID))return;var n=document.createElement('style');n.id=NAV_STYLE_ID;n.textContent=NAV_CSS;(document.head||document.documentElement).appendChild(n);}
 
   function injectGoldStyle() {
@@ -477,6 +627,10 @@
       updateVisual();
       if (enabled()) ensureUpstream();
       registerSettings();
+      if (enabled()) beginNavigation();
+      if (window.Lampa && Lampa.Listener && typeof Lampa.Listener.follow==='function') {
+        try { Lampa.Listener.follow('activity',queueNavigation); }catch(err){}
+      }
     } catch (e) {
       try { console.warn('[Apple Cinema Hero] Safe mode:', e); }
       catch (_) {}
