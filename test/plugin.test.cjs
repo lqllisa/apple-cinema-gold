@@ -72,7 +72,7 @@ function fixture(t, options = {}) {
   t.after(()=>frameObserver.disconnect());
   function video() {return {site:'YouTube',type:'Trailer',key:'M7lc1UVf-VE',official:true};}
   function home(withHero=true) {
-    q('.activity__body').innerHTML='<div class="scroll"><div class="scroll__body"><div class="items-line"><div class="card"></div></div></div></div>';
+    q('.activity__body').innerHTML='<div class="scroll scroll--over scroll--mask"><div class="scroll__content"><div class="scroll__body"><div class="items-line"><div class="items-line__head"><div class="items-line__title">Популярные сериалы</div></div><div class="scroll scroll--horizontal"><div class="scroll__content"><div class="scroll__body"><div class="card"></div></div></div></div></div></div></div></div>';
     q('.card').card_data = movie; emit('activity',{type:'start'});
     if(withHero) mountHero();
   }
@@ -188,7 +188,7 @@ test('disable restores background container and removes extra controls', async t
   assert.equal(e.q('.acg-trailer-preview'),null);assert.equal(e.q('.acg-detail'),null);
   assert.equal(e.q('.full-start__background').parentNode,e.q('.full'));
   assert.equal(e.d.querySelectorAll('.acg-meta-block,.acg-detail-overview,.acg-favorite').length,0);
-  assert(e.q('.button--play'));assert(!e.d.body.classList.contains('acg-v17'));
+  assert(e.q('.button--play'));assert(!e.d.body.classList.contains('acg-v18'));
 });
 
 
@@ -216,6 +216,7 @@ test('HTTPS trailer bridge mutes and starts video; sends confirmed state only', 
   const target={mute:()=>muted++,playVideo:()=>played++};
   config.events.onReady({target});assert.equal(muted,1);assert.equal(played,1);assert.equal(messages[0].state,'ready');
   config.events.onStateChange({target,data:1});assert.equal(messages[1].state,'playing');
+  config.events.onStateChange({target,data:3});assert.equal(messages.at(-1).state,'buffering');
   // Autoplay can begin in the pre-created frame before the API attaches.
   target.getPlayerState=()=>1;
   config.events.onReady({target});assert.equal(messages.at(-1).state,'playing');
@@ -278,22 +279,22 @@ test('normalized Lampa video links without TMDB site/type are accepted', async t
   assert.equal(e.state.requests.length,0);
 });
 
-test('card and settings switches stop immediately, restart and save preference', async t=>{
+test('background preview has no card switch; settings stop, restart and persist it', async t=>{
   const e=fixture(t);e.full();await wait(65);
-  const toggle=e.q('.acg-preview-toggle');e.enter(toggle);
+  assert.equal(e.q('.acg-preview-toggle'),null);
+  e.settings.lmp_apple_cinema_trailer_preview.onChange('false');
   assert.equal(e.storage.lmp_apple_cinema_trailer_preview,'false');assert.equal(e.q('.acg-trailer-preview'),null);
-  assert.equal(toggle.getAttribute('aria-pressed'),'false');assert.match(toggle.textContent,/постер/);
   e.settings.lmp_apple_cinema_trailer_preview.onChange('true');await wait(30);
-  assert.equal(e.w.AppleCinemaGold.diagnostics.trailer,'playing');assert.equal(toggle.getAttribute('aria-pressed'),'true');
+  assert.equal(e.w.AppleCinemaGold.diagnostics.trailer,'playing');
   e.settings.lmp_apple_cinema_trailer_preview.onChange('false');e.home();e.full();await wait(65);
-  assert.equal(e.q('.acg-trailer-preview'),null);assert.match(e.q('.acg-preview-toggle').textContent,/постер/);
+  assert.equal(e.q('.acg-trailer-preview'),null);assert(e.q('.full-start__background'));
 });
 
 test('autoplay denial ends attempts and keeps a readable poster fallback', async t=>{
   const e=fixture(t,{playerMode:'autoplay'});e.full();await wait(70);
   assert.equal(e.w.AppleCinemaGold.diagnostics.trailer,'autoplay-blocked');
   assert.equal(e.q('.acg-trailer-preview'),null);assert(e.q('.full-start__background'));
-  assert.match(e.q('.acg-trailer-status').textContent,/недоступно/);
+  assert.equal(e.q('.acg-trailer-status'),null);assert.equal(e.state.notices.length,0);
   assert(e.q('.acg-manual-trailer'));
 });
 
@@ -306,9 +307,57 @@ test('full completion before attachment waits for the active header', async t=>{
   assert.equal(e.w.AppleCinemaGold.diagnostics.trailer,'playing');
 });
 
-test('existing trailer preference and row spacing survive 1.7 migration', async t=>{
-  const e=fixture(t,{storage:{lmp_apple_cinema_trailer_preview:'false',lmp_apple_cinema_row_gap:'4'}});
-  e.full();await wait(50);
-  assert.equal(e.storage.lmp_apple_cinema_trailer_preview,'false');assert.equal(e.storage.lmp_apple_cinema_row_gap,'4');
-  assert.equal(e.q('.acg-trailer-preview'),null);
+test('1.8 defaults to video once, keeping approved toolbar size and row spacing', async t=>{
+  const e=fixture(t,{storage:{lmp_apple_cinema_v17_migrated:'true',lmp_apple_cinema_topbar_scale:'1.1',lmp_apple_cinema_trailer_preview:'false',lmp_apple_cinema_row_gap:'4'}});
+  e.full();await wait(70);
+  assert.equal(e.storage.lmp_apple_cinema_trailer_preview,'true');assert.equal(e.storage.lmp_apple_cinema_row_gap,'4');
+  assert.equal(e.storage.lmp_apple_cinema_topbar_scale,'1.1');assert.equal(e.w.AppleCinemaGold.diagnostics.trailer,'playing');
+});
+
+test('a trailer preference saved after 1.8 migration survives restarting', async t=>{
+  const e=fixture(t,{storage:{lmp_apple_cinema_v18_migrated:'true',lmp_apple_cinema_trailer_preview:'false'}});
+  e.full();await wait(65);assert.equal(e.q('.acg-trailer-preview'),null);
+  assert.equal(e.storage.lmp_apple_cinema_trailer_preview,'false');
+});
+
+test('native ambient background and only Shots main row are configured and restorable', t=>{
+  const previous={background:false,background_type:'poster',black_style:true,content_rows_shots_main:true,content_rows_shots_favorite:true};
+  const e=fixture(t,{storage:previous});
+  assert.equal(e.storage.background,true);assert.equal(e.storage.background_type,'simple');assert.equal(e.storage.black_style,false);
+  assert.equal(e.storage.content_rows_shots_main,false);assert.equal(e.storage.content_rows_shots_favorite,true);
+  e.settings.lmp_apple_cinema_enabled.onChange('false');
+  for (const key of Object.keys(previous)) assert.equal(e.storage[key],previous[key]);
+});
+
+test('Anime joins the centered categories and leaves the drawer without rebinding its action', async t=>{
+  const e=fixture(t);let opens=0;
+  e.q('.menu__list').insertAdjacentHTML('beforeend','<div class="menu__item selector" data-action="anime">Аниме</div>');
+  e.emit('activity',{type:'start'});await wait(25);
+  assert(e.storage.appletv_agnative_topnav_items.includes('anime'));
+  e.q('.agnative-topnav-shell__items').innerHTML='<div class="agnative-topnav-shell__item selector" data-action="anime">Аниме</div>';
+  e.q('.agnative-topnav-shell__item').addEventListener('hover:enter',()=>opens++);
+  const dock=e.d.createElement('div');dock.className='agnative-leftdock';dock.innerHTML='<div class="agnative-leftdock__item selector" data-action="anime">Аниме</div>';
+  e.d.body.append(dock);e.emit('activity',{type:'start'});await wait(25);
+  assert(e.q('[data-action="anime"]',dock).classList.contains('acg-top-hidden'));
+  assert(!e.q('[data-action="anime"]',dock).classList.contains('selector'));
+  e.enter(e.q('.agnative-topnav-shell__item'));assert.equal(opens,1);
+});
+
+test('toolbar inset belongs to the outer vertical scroller and survives navigation', async t=>{
+  const e=fixture(t);await wait(25);
+  assert.equal(e.d.querySelectorAll('.acg-feed-scroll').length,1);
+  assert.equal(e.q('.acg-feed-scroll'),e.q('.activity__body > .scroll'));
+  assert(!e.q('.scroll--horizontal').classList.contains('acg-feed-scroll'));
+  e.home();await wait(25);assert.equal(e.d.querySelectorAll('.acg-feed-scroll').length,1);
+  e.settings.lmp_apple_cinema_enabled.onChange('false');assert.equal(e.q('.acg-feed-scroll'),null);
+});
+
+test('a stalled trailer immediately reveals the poster, then resumes or times out', async t=>{
+  const e=fixture(t);e.full();await wait(70);
+  const frame=e.q('.acg-trailer-preview iframe'),token=new URL(frame.src).searchParams.get('token');
+  const send=state=>e.w.dispatchEvent(new e.w.MessageEvent('message',{origin:'https://lqllisa.github.io',source:frame.contentWindow,data:{acgToken:token,state}}));
+  send('buffering');assert.equal(e.q('.acg-trailer-playing'),null);assert(e.q('.full-start__background'));
+  send('playing');assert(e.q('.acg-trailer-playing'));
+  send('buffering');await wait(380);
+  assert.equal(e.q('.acg-trailer-preview'),null);assert.equal(e.w.AppleCinemaGold.diagnostics.trailer,'playback-timeout');
 });

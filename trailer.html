@@ -58,6 +58,7 @@
               if (destroyed) return;
               if (event.data === 1) { clearRetries(); send('playing'); }
               else if (event.data === 0) event.target.playVideo();
+              else if (event.data === 2 || event.data === 3) send('buffering');
             },
             onError:function (event) { clearRetries(); send('error', event.data); },
             onAutoplayBlocked:function () { clearRetries(); send('blocked'); }

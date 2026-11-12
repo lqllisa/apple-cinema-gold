@@ -1,5 +1,5 @@
 /*
- * Apple Cinema Gold 1.7.0 (2026-11-12)
+ * Apple Cinema Gold 1.8.0 (2026-11-12)
  * Single-file Lampa overlay. Build with python3 build.py.
  * AppleTV AgNative NG remains an external dependency; no upstream code is bundled.
  */
@@ -8,9 +8,9 @@
   if (window.__LMP_APPLE_CINEMA_GOLD_V12__) return;
   window.__LMP_APPLE_CINEMA_GOLD_V12__ = true;
 
-  var VERSION = '1.7.0';
+  var VERSION = '1.8.0';
   var PREFIX = 'lmp_apple_cinema_';
-  var STYLE_ID = 'lmp-apple-cinema-v17-style';
+  var STYLE_ID = 'lmp-apple-cinema-v18-style';
   var UPSTREAM = 'https://llowmikee.github.io/AppleTVAGNativeNG/appletv_agnative.js';
   var TRAILER_ORIGIN = 'https://lqllisa.github.io';
   var TRAILER_PAGE = TRAILER_ORIGIN + '/apple-cinema-gold/trailer.html';
@@ -29,7 +29,10 @@
     appletv_agnative_hero_animation: 'false',
     appletv_agnative_hero_bg_anim: 'off', appletv_agnative_hero_quality: 'w1280',
     appletv_agnative_hero_trailer: 'false', appletv_agnative_backdrop: 'on',
-    appletv_agnative_card_image_mode: 'backdrop', appletv_agnative_rating_style: 'mono'
+    appletv_agnative_card_image_mode: 'backdrop', appletv_agnative_rating_style: 'mono',
+    appletv_agnative_card_anim: 'off',
+    background: true, background_type: 'simple', black_style: false,
+    content_rows_shots_main: false
   };
 
   function get(key, fallback) { try { return Lampa.Storage.get(key, fallback); } catch (_) { return fallback; } }
@@ -63,8 +66,8 @@
   function visual() {
     var body = document.body;
     if (!body) return;
-    if (!enabled()) { body.classList.remove('lmp-cinema-hero', 'acg-v17'); return; }
-    body.classList.add('lmp-cinema-hero', 'acg-v17');
+    if (!enabled()) { body.classList.remove('lmp-cinema-hero', 'acg-v18'); return; }
+    body.classList.add('lmp-cinema-hero', 'acg-v18');
     // Lampa scales body, not html. Freeze that base in px so nested controls
     // stay proportional at 720p/1080p/4K without inheriting font multipliers.
     var unit = parseFloat(window.getComputedStyle(body).fontSize) || 16;
@@ -85,7 +88,6 @@
   var icons = {
     play: '<path d="M8 5v14l11-7z" fill="currentColor" stroke="none"/>',
     bookmark: '<path d="M6 3h12v18l-6-4-6 4z"/>',
-    film: '<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 4v16M17 4v16M3 9h4m-4 6h4m10-6h4m-4 6h4"/>',
     search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',
     settings: '<path d="m10 3-.6 2.1-2 .9-2-.5-2 3.5L5 10.5v3l-1.6 1.6 2 3.4 2-.5 2 .9.6 2.1h4l.6-2.1 2-.9 2 .5 2-3.4-1.6-1.6v-3l1.6-1.5-2-3.5-2 .5-2-.9L14 3z"/><circle cx="12" cy="12" r="3"/>',
     info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.1"/>',
@@ -307,11 +309,7 @@
         });
       });
       manual.classList.add('full-start__button'); actions.appendChild(manual);
-      var toggle = button('preview-toggle', 'Фоновый трейлер', 'film', function () { setTrailerPreview(!trailerEnabled()); });
-      toggle.classList.add('full-start__button'); actions.appendChild(toggle);
-      var status = document.createElement('div'); status.className = 'acg-trailer-status'; status.setAttribute('role', 'status'); right.appendChild(status);
     }
-    updatePreviewToggle();
     fullState = {root:root, header:header, data:event.data};
     scheduleTrailer(fullState);
   }
@@ -330,26 +328,13 @@
   }
   function trailerEnabled() { return String(get(PREFIX + 'trailer_preview', 'true')) !== 'false'; }
   function trailersAllowed(data) { return !data.movie.adult && !(window.lampa_settings && lampa_settings.disable_features && lampa_settings.disable_features.trailers); }
-  function updatePreviewToggle() {
-    all('.acg-preview-toggle').forEach(function (node) {
-      var on = trailerEnabled(), text = on ? 'Фон: трейлер' : 'Фон: постер';
-      label(node, on ? 'Выключить фоновый трейлер' : 'Включить фоновый трейлер');
-      node.setAttribute('aria-pressed', on ? 'true' : 'false');
-      var span = qs('span', node); if (span && span.textContent !== text) span.textContent = text;
-    });
-  }
   function setTrailerPreview(on) {
-    set(PREFIX + 'trailer_preview', on ? 'true' : 'false'); updatePreviewToggle();
+    set(PREFIX + 'trailer_preview', on ? 'true' : 'false');
     if (!on) stopTrailer('disabled');
     else if (fullState && connected(fullState.header)) scheduleTrailer(fullState, true);
   }
   function trailerStatus(reason) {
     diagnostics.trailer = reason;
-    if (!fullState) return;
-    var status = qs('.acg-trailer-status', fullState.header); if (!status) return;
-    var text = reason === 'no-trailer' ? 'Трейлер пока не найден' :
-      /error|timeout|blocked|unavailable/.test(reason) ? 'Фоновое видео недоступно. Трейлер можно открыть кнопкой просмотра.' : '';
-    if (status.textContent !== text) status.textContent = text;
   }
 
   /* Prefer videos already returned by Lampa. Its API keeps proxy/language handling. */
@@ -399,7 +384,7 @@
     if (player) { try { player.destroy(); } catch (_) {} player = null; }
     if (preview) {
       var video = qs('video', preview);
-      if (video) { video.onplaying = video.onerror = null; try { video.pause(); video.removeAttribute('src'); video.load(); } catch (_) {} }
+      if (video) { video.onplaying = video.onerror = video.onwaiting = video.onstalled = video.onpause = null; try { video.pause(); video.removeAttribute('src'); video.load(); } catch (_) {} }
       remove(preview); preview = null;
     }
   }
@@ -445,12 +430,18 @@
             if (previewDeadline) clearTimeout(previewDeadline); previewDeadline = null;
             holder.classList.add('acg-trailer-playing'); trailerStatus('playing');
           }
+          function buffering() {
+            if (!current()) return;
+            holder.classList.remove('acg-trailer-playing'); trailerStatus('buffering');
+            if (!previewDeadline) previewDeadline = setTimeout(function () { retry('playback-timeout'); }, 18000);
+          }
           previewDeadline = setTimeout(function () { retry('playback-timeout'); }, 18000);
           if (selected.url) {
             trailerStatus('loading-video');
             var video = document.createElement('video'); video.muted = true; video.defaultMuted = true; video.autoplay = true; video.loop = true;
             video.setAttribute('playsinline', ''); video.setAttribute('webkit-playsinline', ''); video.setAttribute('muted', ''); video.setAttribute('tabindex', '-1');
             video.onplaying = playing; video.onerror = function () { retry('video-error'); };
+            video.onwaiting = video.onstalled = video.onpause = buffering;
             holder.appendChild(video); video.src = selected.url;
             try { var promise = video.play(); if (promise && promise.catch) promise.catch(function () { if (current()) finish('autoplay-blocked'); }); }
             catch (_) { retry('video-error'); }
@@ -467,7 +458,7 @@
             var message = event.data;
             if (!message || message.acgToken !== bridgeToken) return;
             if (message.state === 'playing') playing();
-            else if (message.state === 'ready') trailerStatus('buffering');
+            else if (message.state === 'ready' || message.state === 'buffering') buffering();
             else if (message.state === 'error') retry('youtube-error-' + String(message.code || 'unknown'));
             else if (message.state === 'blocked') finish('autoplay-blocked');
           }
@@ -491,7 +482,7 @@
   function syncCategories() {
     var menu = qs('.menu'); if (!menu) return;
     var source = all('.menu__item.selector[data-action]', menu), result = [];
-    var groups = [ ['main', /^главная$|home/i], ['cartoon', /мультфильм/i], ['movie', /^фильмы$/i], ['tv', /^сериалы$/i],
+    var groups = [ ['main', /^главная$|home/i], ['cartoon', /мультфильм/i], ['anime', /^аниме$|^anime$/i], ['movie', /^фильмы$/i], ['tv', /^сериалы$/i],
       ['dorama', /дорам/i], ['catalog', /каталог/i], ['filter', /фильтр/i], ['favorite', /избранн|закладки/i] ];
     groups.forEach(function (group) {
       for (var i = 0; i < source.length; i++) {
@@ -606,7 +597,7 @@
   function sync() {
     syncTimer = null; if (!enabled()) return;
     try {
-      visual(); syncCategories(); enhanceHero();
+      visual(); syncCategories(); enhanceHero(); syncFeedScroll();
       watchers = watchers.filter(function (watch) { if (!connected(watch.node)) { watch.observer.disconnect(); delete watch.node.__acgWatched; return false; } return true; });
       var header = qs('.acg-detail', activePage());
       if (header) decorateDetailButtons(header);
@@ -618,6 +609,15 @@
     } catch (err) { diagnostics.lastError = String(err.message || err); }
   }
   function queueSync() { if (!syncTimer && enabled()) syncTimer = setTimeout(sync, 120); }
+  function syncFeedScroll() {
+    var page = activePage();
+    if (qs('.acg-detail', page)) return;
+    all('.items-line', page).forEach(function (row) {
+      var scroll = row.closest && row.closest('.scroll');
+      while (scroll && scroll.classList.contains('scroll--horizontal')) scroll = scroll.parentNode.closest('.scroll');
+      if (scroll) scroll.classList.add('acg-feed-scroll');
+    });
+  }
   function cleanup() {
     stopTrailer('disabled'); pending = null; controllerHero = null;
     if (syncTimer) clearTimeout(syncTimer); syncTimer = null;
@@ -625,6 +625,7 @@
     watchers.forEach(function (watch) { watch.observer.disconnect(); delete watch.node.__acgWatched; }); watchers = [];
     if (heroObserver) heroObserver.disconnect(); heroObserver = null;
     all('.acg-system-action').forEach(remove);
+    all('.acg-feed-scroll').forEach(function (node) { node.classList.remove('acg-feed-scroll'); });
     all('.agnative-leftdock__item.acg-top-hidden').forEach(function (node) { node.classList.remove('acg-top-hidden'); node.classList.add('selector'); });
     all('.agnative-leftdock .acg-empty').forEach(function (node) { node.classList.remove('acg-empty'); });
     all('.agnative-hero.acg-enhanced').forEach(function (hero) {
@@ -635,7 +636,7 @@
     all('.acg-detail').forEach(function (header) {
       var image = qs('.full-start__background', header);
       if (image && header.__acgBackgroundParent) header.__acgBackgroundParent.insertBefore(image, header.__acgBackgroundParent.firstChild);
-      all('.acg-meta-block,.acg-detail-overview,.acg-action,.acg-trailer-status', header).forEach(remove); header.classList.remove('acg-detail');
+      all('.acg-meta-block,.acg-detail-overview,.acg-action', header).forEach(remove); header.classList.remove('acg-detail');
       all('.acg-provider', header).forEach(function (node) { node.classList.remove('acg-provider'); });
       delete header.__acgData;
     });
@@ -647,12 +648,12 @@
       var config = {name:PREFIX + name, type:type, default:fallback}; if (values) config.values = values;
       Lampa.SettingsApi.addParam({component:'lmp_apple_cinema_gold', param:config, field:{name:title, description:description}, onChange:onChange});
     }
-    param('enabled', 'trigger', 'Apple Cinema Gold 1.7', 'Стекло, шампань и кинематографичная главная страница.', null, 'true', function (v) {
+    param('enabled', 'trigger', 'Apple Cinema Gold 1.8', 'Стекло, шампань и кинематографичная главная страница.', null, 'true', function (v) {
       set(PREFIX + 'enabled', String(v)); if (!enabled()) { cleanup(); restore(); } else { applyPreset(); ensureUpstream(); queueSync(); } visual();
     });
     param('topbar_scale', 'select', 'Размер верхней панели', 'Категории по центру, системные кнопки отдельно.', {'1':'Компактный','1.1':'На 10% крупнее','1.2':'На 20% крупнее, по макету'}, '1.2', function (v) { set(PREFIX + 'topbar_scale', String(v)); visual(); });
     param('row_gap', 'select', 'Расстояние между каруселями', 'Вертикальное пространство между рядами фильмов.', {'2.4':'Умеренное','3.2':'Свободное, по макету','4':'Максимальное'}, '3.2', function (v) { set(PREFIX + 'row_gap', String(v)); visual(); });
-    param('trailer_preview', 'trigger', 'Фоновый трейлер в карточке', 'Автоматически, без звука. Можно также переключить кнопкой «Фон» в карточке.', null, 'true', function (v) { setTrailerPreview(String(v) !== 'false'); });
+    param('trailer_preview', 'trigger', 'Фоновый трейлер в карточке', 'Включён по умолчанию, без звука. Если видео недоступно, остаётся постер.', null, 'true', function (v) { setTrailerPreview(String(v) !== 'false'); });
     param('simple_glass', 'trigger', 'Упростить стеклянные эффекты', 'Уменьшить нагрузку на слабый телевизор, сохранив цветовую гамму.', null, 'false', function (v) { set(PREFIX + 'simple_glass', String(v)); visual(); });
     param('restore', 'button', 'Вернуть прежние настройки', 'Отключить оформление и восстановить исходные параметры. Затем перезапусти Lampa.', null, '', function () { set(PREFIX + 'enabled','false'); cleanup(); restore(); visual(); notify('Настройки восстановлены. Перезапусти Lampa.'); });
   }
@@ -665,11 +666,12 @@
   function boot() {
     if (ready || !window.Lampa || !Lampa.Storage) return;
     ready = true;
-    if (get(PREFIX + 'v17_migrated', 'false') !== 'true') {
-      set(PREFIX + 'topbar_scale', '1.2');
+    if (get(PREFIX + 'v18_migrated', 'false') !== 'true') {
+      if (get(PREFIX + 'v17_migrated', 'false') !== 'true') set(PREFIX + 'topbar_scale', '1.2');
       if (['2.4', '3.2', '4'].indexOf(String(get(PREFIX + 'row_gap', ''))) < 0) set(PREFIX + 'row_gap', '3.2');
+      set(PREFIX + 'trailer_preview', 'true');
       if (enabled()) applyPreset();
-      set(PREFIX + 'v17_migrated', 'true');
+      set(PREFIX + 'v18_migrated', 'true');
     }
     visual();
     try { settings(); } catch (err) { diagnostics.lastError = String(err.message || err); }
