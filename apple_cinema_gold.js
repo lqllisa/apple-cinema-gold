@@ -309,7 +309,7 @@
   }
 
 
-  var NAV_CSS = "\n/* Champagne glass 1.4. No settings window geometry changes. */\nbody.appletv-agnative-topnav.lmp-cinema-hero.lmp-cinema-gold-noir {\n --acg-text:#f4eee7;--acg-metal:#d5c1a2;--acg-dim:#bdb1a4;--acg-glow:rgba(217,191,151,.12);\n}\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .menu__item.focus,\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .settings-folder.focus,\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .settings-param.focus,\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .selectbox-item.focus {\n background:linear-gradient(100deg,rgba(216,197,170,.84),rgba(180,161,137,.72)) !important;\n color:#201e1b !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 4px 14px rgba(0,0,0,.15) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__inner,\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-rightdock {\n background:rgba(29,31,34,.42) !important;border:1px solid rgba(234,216,189,.14) !important;\n backdrop-filter:blur(22px) saturate(105%) !important;-webkit-backdrop-filter:blur(22px) saturate(105%) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 10px 26px rgba(0,0,0,.12) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__item.focus,\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__item.is-active {\n background:rgba(216,197,170,.26) !important;color:#f9f2e7 !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.18) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero {\n background:#0d1014 !important;border-radius:0 !important;box-shadow:none !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero::before {\n background:linear-gradient(90deg,rgba(9,12,16,.88) 0%,rgba(10,13,17,.59) 27%,rgba(10,13,17,.06) 66%,transparent 89%) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero::after {\n height:59% !important;background:linear-gradient(180deg,transparent 0%,rgba(10,12,15,.11) 38%,rgba(11,13,16,.95) 100%) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__title {\n color:#f0e8de !important;letter-spacing:.085em !important;font-weight:400 !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__overview {\n color:rgba(243,236,227,.82) !important;font-weight:400 !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__meta {\n display:block !important;font-size:.86em !important;color:#d3c3ae !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.selector::after {\n content:\"Подробнее\" !important;left:17em !important;bottom:4.35em !important;\n border-radius:1.25em !important;\n color:#eee5d8 !important;font-weight:500 !important;letter-spacing:.02em !important;\n background:linear-gradient(115deg,rgba(118,110,101,.32),rgba(43,45,48,.43)) !important;\n border:1px solid rgba(236,220,199,.24) !important;\n backdrop-filter:blur(22px) saturate(105%) !important;-webkit-backdrop-filter:blur(22px) saturate(105%) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.21),0 7px 18px rgba(0,0,0,.17) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.focus::after {\n border-color:rgba(248,230,204,.5) !important;box-shadow:0 0 0 2px rgba(236,218,187,.18) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__indicator.active {\n background:#ddcdb9 !important;\n}\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button {\n background:linear-gradient(110deg,rgba(102,96,88,.32),rgba(43,46,50,.42)) !important;\n color:#e9e0d7 !important;border:1px solid rgba(231,213,187,.25) !important;\n border-radius:1.3em !important;backdrop-filter:blur(20px) saturate(105%) !important;\n -webkit-backdrop-filter:blur(20px) saturate(105%) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 7px 18px rgba(0,0,0,.14) !important;\n}\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button.button--play {\n background:linear-gradient(115deg,rgba(224,211,193,.79),rgba(182,165,143,.67)) !important;\n color:#29241e !important;\n}\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button.focus {\n border-color:rgba(243,226,202,.78) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 0 0 2px rgba(235,214,181,.18) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .items-line .card__view {\n border-radius:.95em !important;box-shadow:0 7px 23px rgba(0,0,0,.16) !important;\n}\n\n\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell{\n left:5.6em !important;transform:none !important;\n width:calc(100vw - 19.4em) !important;max-width:calc(100vw - 19.4em) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__inner{\n width:100% !important;max-width:100% !important;overflow:hidden !important;display:flex !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__items{\n flex:1 1 auto !important;min-width:0 !important;overflow-x:auto !important;overflow-y:hidden !important;\n justify-content:flex-start !important;scrollbar-width:none;overscroll-behavior-x:contain;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__items::-webkit-scrollbar{display:none;}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__items>.agnative-topnav-shell__item{\n flex-shrink:0 !important;white-space:nowrap !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__right{flex-shrink:0 !important;}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__item[data-role=\"favorite\"],\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__item[data-role=\"settings\"],\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-clock{display:none !important;}\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-refresh{display:inline-flex !important;align-items:center;justify-content:center;}\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-refresh svg{width:1.1em !important;height:1.1em !important;stroke:currentColor;}\nbody.lmp-cinema-hero .agnative-leftdock__item.acg-moved-to-top{display:none !important;}\n@media(max-width:1000px){\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell{\n left:4.5em !important;width:calc(100vw - 15.2em) !important;max-width:calc(100vw - 15.2em) !important;}\n}\n\n\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-hero-actions {\n position:absolute;left:4.3em;bottom:4.4em;z-index:7;display:flex;gap:.6em;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-hero-actions .selector {\n display:inline-flex;justify-content:center;align-items:center;cursor:pointer;\n padding:.64em 1.0em;min-width:9.4em;box-sizing:border-box;\n color:#f4eadd;background:linear-gradient(115deg,rgba(104,99,93,.33),rgba(41,44,48,.45));\n font:500 1.03rem/1.35 system-ui,Roboto,Arial,sans-serif;letter-spacing:.014em;\n border-radius:1.26em;border:1px solid rgba(238,220,195,.26);\n backdrop-filter:blur(21px) saturate(105%);-webkit-backdrop-filter:blur(21px) saturate(105%);\n box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 6px 19px rgba(0,0,0,.15);\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-hero-actions .acg-watch {\n color:#29231d;background:linear-gradient(112deg,rgba(233,217,195,.85),rgba(180,160,136,.70));\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-hero-actions .acg-save {\n min-width:2.9em;width:2.9em;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-hero-actions .selector.focus,\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-hero-actions .selector.hover {\n border-color:rgba(252,237,213,.8);box-shadow:0 0 0 2px rgba(233,211,183,.20);\n}\n@media(max-width:1000px){\n body.appletv-agnative-topnav.lmp-cinema-hero .acg-hero-actions{left:3em;bottom:3em;}\n body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.selector::after{left:15.6em !important;bottom:3em !important;}\n}\n";
+  var NAV_CSS = "\n/* Champagne glass 1.4. No settings window geometry changes. */\nbody.appletv-agnative-topnav.lmp-cinema-hero.lmp-cinema-gold-noir {\n --acg-text:#f4eee7;--acg-metal:#d5c1a2;--acg-dim:#bdb1a4;--acg-glow:rgba(217,191,151,.12);\n}\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .menu__item.focus,\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .settings-folder.focus,\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .settings-param.focus,\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .selectbox-item.focus {\n background:linear-gradient(100deg,rgba(216,197,170,.84),rgba(180,161,137,.72)) !important;\n color:#201e1b !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 4px 14px rgba(0,0,0,.15) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__inner,\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-rightdock {\n background:rgba(29,31,34,.42) !important;border:1px solid rgba(234,216,189,.14) !important;\n backdrop-filter:blur(22px) saturate(105%) !important;-webkit-backdrop-filter:blur(22px) saturate(105%) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 10px 26px rgba(0,0,0,.12) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__item.focus,\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__item.is-active {\n background:rgba(216,197,170,.26) !important;color:#f9f2e7 !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.18) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero {\n background:#0d1014 !important;border-radius:0 !important;box-shadow:none !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero::before {\n background:linear-gradient(90deg,rgba(9,12,16,.88) 0%,rgba(10,13,17,.59) 27%,rgba(10,13,17,.06) 66%,transparent 89%) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero::after {\n height:59% !important;background:linear-gradient(180deg,transparent 0%,rgba(10,12,15,.11) 38%,rgba(11,13,16,.95) 100%) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__title {\n color:#f0e8de !important;letter-spacing:.085em !important;font-weight:400 !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__overview {\n color:rgba(243,236,227,.82) !important;font-weight:400 !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__meta {\n display:block !important;font-size:.86em !important;color:#d3c3ae !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.selector::after {\n content:\"Подробнее\" !important;left:17em !important;bottom:4.35em !important;\n border-radius:1.25em !important;\n color:#eee5d8 !important;font-weight:500 !important;letter-spacing:.02em !important;\n background:linear-gradient(115deg,rgba(118,110,101,.32),rgba(43,45,48,.43)) !important;\n border:1px solid rgba(236,220,199,.24) !important;\n backdrop-filter:blur(22px) saturate(105%) !important;-webkit-backdrop-filter:blur(22px) saturate(105%) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.21),0 7px 18px rgba(0,0,0,.17) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.focus::after {\n border-color:rgba(248,230,204,.5) !important;box-shadow:0 0 0 2px rgba(236,218,187,.18) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__indicator.active {\n background:#ddcdb9 !important;\n}\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button {\n background:linear-gradient(110deg,rgba(102,96,88,.32),rgba(43,46,50,.42)) !important;\n color:#e9e0d7 !important;border:1px solid rgba(231,213,187,.25) !important;\n border-radius:1.3em !important;backdrop-filter:blur(20px) saturate(105%) !important;\n -webkit-backdrop-filter:blur(20px) saturate(105%) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 7px 18px rgba(0,0,0,.14) !important;\n}\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button.button--play {\n background:linear-gradient(115deg,rgba(224,211,193,.79),rgba(182,165,143,.67)) !important;\n color:#29241e !important;\n}\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button.focus {\n border-color:rgba(243,226,202,.78) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 0 0 2px rgba(235,214,181,.18) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .items-line .card__view {\n border-radius:.95em !important;box-shadow:0 7px 23px rgba(0,0,0,.16) !important;\n}\n\n\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell{\n left:5.6em !important;transform:none !important;\n width:calc(100vw - 19.4em) !important;max-width:calc(100vw - 19.4em) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__inner{\n width:100% !important;max-width:100% !important;overflow:hidden !important;display:flex !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__items{\n flex:1 1 auto !important;min-width:0 !important;overflow-x:auto !important;overflow-y:hidden !important;\n justify-content:flex-start !important;scrollbar-width:none;overscroll-behavior-x:contain;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__items::-webkit-scrollbar{display:none;}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__items>.agnative-topnav-shell__item{\n flex-shrink:0 !important;white-space:nowrap !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__right{flex-shrink:0 !important;}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__item[data-role=\"favorite\"],\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__item[data-role=\"settings\"],\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-clock{display:none !important;}\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-refresh{display:inline-flex !important;align-items:center;justify-content:center;}\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-refresh svg{width:1.1em !important;height:1.1em !important;stroke:currentColor;}\nbody.lmp-cinema-hero .agnative-leftdock__item.acg-moved-to-top{display:none !important;}\n@media(max-width:1000px){\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell{\n left:4.5em !important;width:calc(100vw - 15.2em) !important;max-width:calc(100vw - 15.2em) !important;}\n}\n\n\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-hero-actions {\n position:absolute;left:4.3em;bottom:4.4em;z-index:7;display:flex;gap:.6em;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-hero-actions .selector {\n display:inline-flex;justify-content:center;align-items:center;cursor:pointer;\n padding:.64em 1.0em;min-width:9.4em;box-sizing:border-box;\n color:#f4eadd;background:linear-gradient(115deg,rgba(104,99,93,.33),rgba(41,44,48,.45));\n font:500 1.03rem/1.35 system-ui,Roboto,Arial,sans-serif;letter-spacing:.014em;\n border-radius:1.26em;border:1px solid rgba(238,220,195,.26);\n backdrop-filter:blur(21px) saturate(105%);-webkit-backdrop-filter:blur(21px) saturate(105%);\n box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 6px 19px rgba(0,0,0,.15);\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-hero-actions .acg-watch {\n color:#29231d;background:linear-gradient(112deg,rgba(233,217,195,.85),rgba(180,160,136,.70));\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-hero-actions .acg-save {\n min-width:2.9em;width:2.9em;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-hero-actions .selector.focus,\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-hero-actions .selector.hover {\n border-color:rgba(252,237,213,.8);box-shadow:0 0 0 2px rgba(233,211,183,.20);\n}\n@media(max-width:1000px){\n body.appletv-agnative-topnav.lmp-cinema-hero .acg-hero-actions{left:3em;bottom:3em;}\n body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.selector::after{left:15.6em !important;bottom:3em !important;}\n}\n\n\nbody.lmp-cinema-hero .acg-trailer-preview{\n position:absolute;left:8em;top:0;width:100%;height:38em;z-index:-1;\n background:transparent;pointer-events:none;overflow:hidden;\n -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 26%,#000 76%,transparent 100%);\n mask-image:linear-gradient(90deg,transparent 0%,#000 26%,#000 76%,transparent 100%);\n}\nbody.lmp-cinema-hero .acg-trailer-preview iframe{\n width:100%;height:100%;position:absolute;left:0;top:0;border:0;pointer-events:none;opacity:.83;\n}\n";
 
   var topnavLastSelection = '';
   var navSyncTimeout = null;
@@ -503,6 +503,91 @@
     }
   }
 
+
+  var TRAILER_KEY=STORAGE_PREFIX+'trailer_preview';
+  var previewTimer=null,previewNode=null,previewAbort=null,previewEpoch=0;
+  var trailerCache={};
+  function stopTrailerPreview(){
+    previewEpoch++;
+    if(previewTimer){clearTimeout(previewTimer);previewTimer=null;}
+    if(previewAbort){try{previewAbort.abort();}catch(err){}previewAbort=null;}
+    if(previewNode){try{previewNode.remove();}catch(err){}previewNode=null;}
+  }
+  function trailerIdFromTMDB(result){
+    var list=(result&&result.results)||[];
+    var candidates=list.filter(function(x){
+      return x&&x.site==='YouTube'&&x.type==='Trailer'&&typeof x.key==='string'&&/^[A-Za-z0-9_-]{11}$/.test(x.key);
+    });
+    candidates.sort(function(a,b){return Number(!!b.official)-Number(!!a.official);});
+    return candidates.length?candidates[0].key:null;
+  }
+  function getTrailer(kind,id,callback){
+    var cacheKey=kind+'/'+id;
+    if(Object.prototype.hasOwnProperty.call(trailerCache,cacheKey))return callback(trailerCache[cacheKey]);
+    if(typeof window.fetch!=='function'||!Lampa.TMDB||typeof Lampa.TMDB.api!=='function'||typeof Lampa.TMDB.key!=='function')return callback(null);
+    var url=Lampa.TMDB.api(kind+'/'+encodeURIComponent(id)+'/videos');
+    var apiKey=Lampa.TMDB.key();
+    previewAbort=typeof AbortController==='function'?new AbortController():null;
+    var options=previewAbort?{signal:previewAbort.signal}:{};
+    function request(lang){
+      var link=url+(url.indexOf('?')>=0?'&':'?')+'api_key='+encodeURIComponent(apiKey)+'&language='+encodeURIComponent(lang);
+      return window.fetch(link,options).then(function(r){if(!r.ok)throw Error('TMDB request');return r.json();});
+    }
+    request('ru-RU').then(function(data){
+      var found=trailerIdFromTMDB(data);
+      if(found)return found;
+      return request('en-US').then(trailerIdFromTMDB);
+    }).then(function(found){trailerCache[cacheKey]=found||null;callback(found||null);})
+    .catch(function(){callback(null);});
+  }
+  function startBackgroundTrailer(e){
+    if(!enabled()||get(TRAILER_KEY,'true')==='false')return;
+    if(window.innerWidth&&window.innerWidth<800)return;
+    if(typeof window.matchMedia==='function'&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    var body=e.body&&(e.body[0]||e.body),film=e.data&&e.data.movie;
+    if(!body||!film||!film.id||typeof body.querySelector!=='function')return;
+    var img=body.querySelector('.full-start__background');
+    if(!img)return;
+    stopTrailerPreview();
+    var token=previewEpoch;
+    var kind=(film.name||film.first_air_date)?'tv':'movie';
+    previewTimer=setTimeout(function(){
+      previewTimer=null;
+      getTrailer(kind,film.id,function(key){
+        if(!key||token!==previewEpoch||!img.parentNode||!enabled())return;
+        var holder=document.createElement('div');
+        holder.className='acg-trailer-preview';
+        holder.setAttribute('aria-hidden','true');
+        var frame=document.createElement('iframe');
+        frame.setAttribute('allow','autoplay; encrypted-media; picture-in-picture');
+        frame.setAttribute('loading','lazy');
+        frame.setAttribute('tabindex','-1');
+        frame.src='https://www.youtube-nocookie.com/embed/'+encodeURIComponent(key)+'?autoplay=1&mute=1&controls=0&playsinline=1&loop=1&rel=0&playlist='+encodeURIComponent(key);
+        frame.onerror=function(){if(previewNode===holder)stopTrailerPreview();};
+        holder.appendChild(frame);
+        img.parentNode.insertBefore(holder,img.nextSibling);
+        previewNode=holder;
+      });
+    },2600);
+  }
+  function onDetailEvent(e){
+    if(!e||e.type!=='complite')return;
+    startBackgroundTrailer(e);
+  }
+  function initTrailerPreview(){
+    if(!window.Lampa||!Lampa.Listener||typeof Lampa.Listener.follow!=='function')return;
+    try{
+      Lampa.Listener.follow('full',onDetailEvent);
+      Lampa.Listener.follow('player',stopTrailerPreview);
+      Lampa.Listener.follow('activity',function(){
+        try{
+          var current=Lampa.Activity&&Lampa.Activity.active&&Lampa.Activity.active();
+          if(current&&current.component&&current.component!=='full')stopTrailerPreview();
+        }catch(err){}
+      });
+    }catch(err){}
+  }
+
   function injectNavStyle(){if(document.getElementById(NAV_STYLE_ID))return;var n=document.createElement('style');n.id=NAV_STYLE_ID;n.textContent=NAV_CSS;(document.head||document.documentElement).appendChild(n);}
 
   function injectGoldStyle() {
@@ -632,6 +717,12 @@
       });
       Lampa.SettingsApi.addParam({
         component: SETTINGS_COMPONENT,
+        param:{name:TRAILER_KEY,type:'trigger',default:'true'},
+        field:{name:'Фоновый трейлер в карточке',description:'Автозапуск без звука при наличии ролика. На слабой приставке можно отключить.'},
+        onChange:function(v){set(TRAILER_KEY,String(v));if(String(v)==='false')stopTrailerPreview();}
+      });
+      Lampa.SettingsApi.addParam({
+        component: SETTINGS_COMPONENT,
         param: {name: STORAGE_PREFIX + 'restore', type: 'button'},
         field: {
           name: 'Вернуть прежние настройки темы',
@@ -640,6 +731,8 @@
         onChange: function () {
           set(ENABLED, 'false');
           restorePreviousSettings();
+          stopTrailerPreview();
+          clearHeroAction();
           updateVisual();
           try { if (Lampa.Noty && Lampa.Noty.show) Lampa.Noty.show('Настройки восстановлены. Перезапусти Lampa.'); }
           catch (_) {}
@@ -671,6 +764,7 @@
       if (enabled()) ensureUpstream();
       registerSettings();
       if (enabled()) beginNavigation();
+      if (enabled()) initTrailerPreview();
       if (window.Lampa && Lampa.Listener && typeof Lampa.Listener.follow==='function') {
         try{Lampa.Listener.follow('full',heroCardComplete);}catch(err){}
       }
