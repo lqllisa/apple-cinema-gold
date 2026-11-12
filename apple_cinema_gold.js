@@ -1,6 +1,6 @@
 /*
  * Apple Cinema Gold for Lampa - combined Apple Cinema Hero + Gold Theme aesthetics.
- * Version: 1.3.1 (2026-11-12)
+ * Version: 1.4.0 (2026-11-12)
  * Purpose: Apple TV navigation, immersive cinematic hero and integrated gold palettes.
  * The AppleTV AgNative NG upstream is loaded separately and not embedded.
  * Gold palettes were reimplemented from the publicly documented BazZziliuS Gold Theme aesthetic.
@@ -33,7 +33,8 @@
   var started = false;
   var settingsReady = false;
   var GOLD_CLASSES = ['lmp-cinema-gold-classic', 'lmp-cinema-gold-noir'];
-  var TOPBAR_CLASSES = ['lmp-cinema-topbar-1p5x', 'lmp-cinema-topbar-2x', 'lmp-cinema-topbar-3x'];
+  var TOPBAR_CLASSES = ['lmp-cinema-topbar-1p5x', 'lmp-cinema-topbar-2x', 'lmp-cinema-topbar-2p25x', 'lmp-cinema-topbar-3x'];
+  var NAV_STYLE_ID = 'lmp-cinema-nav-champagne-v14';
 
   // Preset keys match the AppleTV AgNative NG v0.4.1 source. These belong to upstream, not a new API.
   var PRESET = {
@@ -69,8 +70,8 @@
   }
 
   function topbarScale() {
-    var v = String(get(TOPBAR_SCALE, '1.5'));
-    return v === '1' || v === '1.5' || v === '2' || v === '3' ? v : '1.5';
+    var v = String(get(TOPBAR_SCALE, '2.25'));
+    return v === '1' || v === '1.5' || v === '2' || v === '2.25' || v === '3' ? v : '2.25';
   }
 
   function snapshotOriginalSettings() {
@@ -282,7 +283,7 @@
     ].join('\n');
   }
 
-  var TOPBAR_CSS = magnifiedTopbarCSS(1.5, '1p5') + '\n' + magnifiedTopbarCSS(2) + '\n' + magnifiedTopbarCSS(3);
+  var TOPBAR_CSS = magnifiedTopbarCSS(1.5, '1p5') + '\n' + magnifiedTopbarCSS(2) + '\n' + magnifiedTopbarCSS(2.25, '2p25') + '\n' + magnifiedTopbarCSS(3);
   var TOPBAR_STYLE_ID = 'lmp-apple-cinema-topbar-style';
   var DETAIL_STYLE_ID = 'lmp-apple-cinema-design-13';
   function injectTopbarStyle() {
@@ -306,6 +307,10 @@
     node.textContent = DETAIL_CSS;
     (document.head || document.documentElement).appendChild(node);
   }
+
+
+  var NAV_CSS = "\n/* Champagne glass 1.4. No settings window geometry changes. */\nbody.appletv-agnative-topnav.lmp-cinema-hero.lmp-cinema-gold-noir {\n --acg-text:#f4eee7;--acg-metal:#d5c1a2;--acg-dim:#bdb1a4;--acg-glow:rgba(217,191,151,.12);\n}\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .menu__item.focus,\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .settings-folder.focus,\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .settings-param.focus,\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .selectbox-item.focus {\n background:linear-gradient(100deg,rgba(216,197,170,.84),rgba(180,161,137,.72)) !important;\n color:#201e1b !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 4px 14px rgba(0,0,0,.15) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__inner,\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-rightdock {\n background:rgba(29,31,34,.42) !important;border:1px solid rgba(234,216,189,.14) !important;\n backdrop-filter:blur(22px) saturate(105%) !important;-webkit-backdrop-filter:blur(22px) saturate(105%) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 10px 26px rgba(0,0,0,.12) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__item.focus,\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__item.is-active {\n background:rgba(216,197,170,.26) !important;color:#f9f2e7 !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.18) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero {\n background:#0d1014 !important;border-radius:0 !important;box-shadow:none !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero::before {\n background:linear-gradient(90deg,rgba(9,12,16,.88) 0%,rgba(10,13,17,.59) 27%,rgba(10,13,17,.06) 66%,transparent 89%) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero::after {\n height:59% !important;background:linear-gradient(180deg,transparent 0%,rgba(10,12,15,.11) 38%,rgba(11,13,16,.95) 100%) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__title {\n color:#f0e8de !important;letter-spacing:.085em !important;font-weight:400 !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__overview {\n color:rgba(243,236,227,.82) !important;font-weight:400 !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__meta {\n display:block !important;font-size:.86em !important;color:#d3c3ae !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.selector::after {\n content:\"Подробнее\" !important;left:17em !important;bottom:4.35em !important;\n border-radius:1.25em !important;\n color:#eee5d8 !important;font-weight:500 !important;letter-spacing:.02em !important;\n background:linear-gradient(115deg,rgba(118,110,101,.32),rgba(43,45,48,.43)) !important;\n border:1px solid rgba(236,220,199,.24) !important;\n backdrop-filter:blur(22px) saturate(105%) !important;-webkit-backdrop-filter:blur(22px) saturate(105%) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.21),0 7px 18px rgba(0,0,0,.17) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.focus::after {\n border-color:rgba(248,230,204,.5) !important;box-shadow:0 0 0 2px rgba(236,218,187,.18) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__indicator.active {\n background:#ddcdb9 !important;\n}\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button {\n background:linear-gradient(110deg,rgba(102,96,88,.32),rgba(43,46,50,.42)) !important;\n color:#e9e0d7 !important;border:1px solid rgba(231,213,187,.25) !important;\n border-radius:1.3em !important;backdrop-filter:blur(20px) saturate(105%) !important;\n -webkit-backdrop-filter:blur(20px) saturate(105%) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 7px 18px rgba(0,0,0,.14) !important;\n}\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button.button--play {\n background:linear-gradient(115deg,rgba(224,211,193,.79),rgba(182,165,143,.67)) !important;\n color:#29241e !important;\n}\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button.focus {\n border-color:rgba(243,226,202,.78) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 0 0 2px rgba(235,214,181,.18) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .items-line .card__view {\n border-radius:.95em !important;box-shadow:0 7px 23px rgba(0,0,0,.16) !important;\n}\n";
+  function injectNavStyle(){if(document.getElementById(NAV_STYLE_ID))return;var n=document.createElement('style');n.id=NAV_STYLE_ID;n.textContent=NAV_CSS;(document.head||document.documentElement).appendChild(n);}
 
   function injectGoldStyle() {
     if (document.getElementById(GOLD_STYLE_ID)) return;
@@ -334,7 +339,7 @@
       var scale = topbarScale();
       if (scale !== '1') {
         injectTopbarStyle();
-        document.body.classList.add('lmp-cinema-topbar-' + (scale === '1.5' ? '1p5' : scale) + 'x');
+        document.body.classList.add('lmp-cinema-topbar-' + (scale === '1.5' ? '1p5' : scale === '2.25' ? '2p25' : scale) + 'x');
       }
       var mode = goldMode();
       if (mode !== 'off') {
@@ -342,6 +347,7 @@
         document.body.classList.add('lmp-cinema-gold-' + mode);
       }
       injectDetailStyle();
+      injectNavStyle();
     } else {
       document.body.classList.remove('lmp-cinema-hero');
     }
@@ -414,12 +420,13 @@
           name: TOPBAR_SCALE,
           type: 'select',
           values: {
-            '1.5': '1,5×: компактная панель (новый размер)',
+            '2.25': '2,25×: по макету',
+            '1.5': '1,5×: компактная панель',
             '1': '1×: исходный размер Apple TV',
             '2': '2×: увеличенная панель',
             '3': '3×: очень крупная панель'
           },
-          default: '1.5'
+          default: '2.25'
         },
         field: {
           name: 'Масштаб верхнего меню и иконок',
@@ -456,9 +463,14 @@
     if (started || !window.Lampa || !Lampa.Storage) return;
     started = true;
     try {
-      // Upgrade the previous 3x default to exactly half (1.5x) once.
+      // Existing 1.5x default becomes 2.25x in the approved layout.
+      if (get(STORAGE_PREFIX + 'v14_scale_migrated','false') !== 'true') {
+        if(String(get(TOPBAR_SCALE,'1.5'))==='1.5')set(TOPBAR_SCALE,'2.25');
+        set(STORAGE_PREFIX + 'v14_scale_migrated','true');
+      }
+      // Backward compatibility with earlier stored values.
       if (get(SCALE_MIGRATED, 'false') !== 'true') {
-        if (String(get(TOPBAR_SCALE, '3')) === '3') set(TOPBAR_SCALE, '1.5');
+        if (String(get(TOPBAR_SCALE, '3')) === '3') set(TOPBAR_SCALE, '2.25');
         set(SCALE_MIGRATED, 'true');
       }
       if (enabled() && get(INITIALIZED, 'false') !== 'true') applyPreset();
