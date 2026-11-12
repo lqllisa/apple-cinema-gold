@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Apple Cinema Gold trailer</title>
+  <style>
+    html,body,#player{margin:0;width:100%;height:100%;overflow:hidden;background:#0b0e12}
+    iframe{display:block;border:0;width:100%;height:100%}
+  </style>
+</head>
+<body>
+  <div id="player"></div>
+  <script>
+  (function () {
+    'use strict';
+    function param(name) {
+      var match = new RegExp('[?&]' + name + '=([^&]*)').exec(location.search);
+      return match ? decodeURIComponent(match[1]) : '';
+    }
+    var id = param('video'), token = param('token'), player = null, destroyed = false;
+    if (!/^[A-Za-z0-9_-]{11}$/.test(id) || !/^acg_[A-Za-z0-9_]+$/.test(token)) return;
+    function send(state, code) {
+      // State only, no user data. The parent validates token, source and origin.
+      if (!destroyed) parent.postMessage({acgToken:token, state:state, code:code}, '*');
+    }
+    window.onYouTubeIframeAPIReady = function () {
+      if (destroyed) return;
+      try {
+        player = new YT.Player('player', {
+          host:'https://www.youtube-nocookie.com', videoId:id, width:'100%', height:'100%',
+          playerVars:{autoplay:1, mute:1, controls:0, disablekb:1, playsinline:1, rel:0, loop:1, playlist:id, origin:location.origin},
+          events:{
+            onReady:function (event) {
+              if (destroyed) return;
+              event.target.mute(); event.target.playVideo();
+            },
+            onStateChange:function (event) {
+              if (destroyed) return;
+              if (event.data === 1) send('playing');
+              else if (event.data === 0) event.target.playVideo();
+            },
+            onError:function (event) { send('error', event.data); },
+            onAutoplayBlocked:function () { send('blocked'); }
+          }
+        });
+      } catch (_) { send('error', 'player'); }
+    };
+    window.addEventListener('message', function (event) {
+      if (event.source !== parent || !event.data || event.data.acgToken !== token || event.data.command !== 'destroy') return;
+      destroyed = true;
+      if (player) { try { player.destroy(); } catch (_) {} player = null; }
+    });
+    var api = document.createElement('script');
+    api.src = 'https://www.youtube.com/iframe_api'; api.async = true;
+    api.onerror = function () { send('error', 'api-load'); };
+    document.head.appendChild(api);
+  })();
+  </script>
+</body>
+</html>

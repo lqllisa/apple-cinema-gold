@@ -1,813 +1,576 @@
 /*
- * Apple Cinema Gold for Lampa - combined Apple Cinema Hero + Gold Theme aesthetics.
- * Version: 1.5.1 (2026-11-12)
- * Purpose: Apple TV navigation, immersive cinematic hero and integrated gold palettes.
- * The AppleTV AgNative NG upstream is loaded separately and not embedded.
- * Gold palettes were reimplemented from the publicly documented BazZziliuS Gold Theme aesthetic.
- *
- * Safety:
- *  - no remote sources except optional upstream AppleTV AgNative NG JS
- *  - no changes to Lampa navigation/controller or content provider integrations
- *  - reversible settings snapshot
- *  - no MutationObserver, infinite loops, or general DOM rewrites
- *  - catches failures; default Lampa UI remains usable if upstream is unavailable
+ * Apple Cinema Gold 1.6.0 (2026-11-12)
+ * Single-file Lampa overlay. Build with python3 build.py.
+ * AppleTV AgNative NG remains an external dependency; no upstream code is bundled.
  */
 (function () {
   'use strict';
+  if (window.__LMP_APPLE_CINEMA_GOLD_V12__) return;
+  window.__LMP_APPLE_CINEMA_GOLD_V12__ = true;
 
-  var GUARD = '__LMP_APPLE_CINEMA_GOLD_V12__';
-  if (window[GUARD]) return;
-  window[GUARD] = true;
-
+  var VERSION = '1.6.0';
+  var PREFIX = 'lmp_apple_cinema_';
+  var STYLE_ID = 'lmp-apple-cinema-v16-style';
   var UPSTREAM = 'https://llowmikee.github.io/AppleTVAGNativeNG/appletv_agnative.js';
-  var STYLE_ID = 'lmp-apple-cinema-hero-style';
-  var GOLD_STYLE_ID = 'lmp-apple-cinema-gold-style';
-  var GOLD_MODE = 'lmp_apple_cinema_gold_mode';
-  var TOPBAR_SCALE = 'lmp_apple_cinema_topbar_scale';
-  var STORAGE_PREFIX = 'lmp_apple_cinema_';
-  var SCALE_MIGRATED = STORAGE_PREFIX + 'v13_scale_migrated';
-  var ENABLED = STORAGE_PREFIX + 'enabled';
-  var INITIALIZED = STORAGE_PREFIX + 'preset_initialized';
-  var SNAPSHOT = STORAGE_PREFIX + 'original_values';
-  var SETTINGS_COMPONENT = 'lmp_apple_cinema_gold';
-  var started = false;
-  var settingsReady = false;
-  var GOLD_CLASSES = ['lmp-cinema-gold-classic', 'lmp-cinema-gold-noir'];
-  var TOPBAR_CLASSES = ['lmp-cinema-topbar-1p5x', 'lmp-cinema-topbar-2x', 'lmp-cinema-topbar-2p25x', 'lmp-cinema-topbar-3x'];
-  var NAV_STYLE_ID = 'lmp-cinema-nav-champagne-v15';
-
-  // Preset keys match the AppleTV AgNative NG v0.4.1 source. These belong to upstream, not a new API.
-  var PRESET = {
-    'appletv_agnative_topnav_enabled': 'on',
-    'appletv_agnative_topnav_visible': 'true',
-    'appletv_agnative_topnav_size': 'md',
-    'appletv_agnative_hero_enabled': 'true',
-    'appletv_agnative_hero_align': 'bottom',
-    'appletv_agnative_hero_indicators': 'true',
-    'appletv_agnative_hero_animation': 'true',
-    'appletv_agnative_hero_interval': '40',
-    'appletv_agnative_hero_bg_anim': 'off',
-    'appletv_agnative_hero_quality': 'w1280',
-    'appletv_agnative_hero_trailer': 'false',
-    'appletv_agnative_backdrop': 'on',
-    'appletv_agnative_card_image_mode': 'backdrop',
-    'appletv_agnative_rating_style': 'mono',
-    'appletv_agnative_perf_mode': 'auto'
+  var TRAILER_ORIGIN = 'https://lqllisa.github.io';
+  var TRAILER_PAGE = TRAILER_ORIGIN + '/apple-cinema-gold/trailer.html';
+  var CSS = "/* --acg-unit is Lampa's body font size, captured before nested menu scaling. */\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 {\n  --acg-unit:16px; --acg-ink:#f6f3ed; --acg-accent:#e7d9c3; --acg-nav-scale:1; --acg-row-gap:calc(3.2 * var(--acg-unit));\n  background:#0b0e12 !important; color:var(--acg-ink);\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .head { z-index:40 !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .head__body { height:0 !important; min-height:0 !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-topnav-shell {\n  position:absolute !important; top:calc(.8 * var(--acg-unit)) !important; left:calc(5.3 * var(--acg-unit)) !important; right:calc(5.3 * var(--acg-unit)) !important;\n  width:auto !important; max-width:none !important; height:calc(calc(2.9 * var(--acg-unit)) * var(--acg-nav-scale)) !important;\n  transform:none !important; font-size:calc(1 * var(--acg-unit)) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-topnav-shell__inner {\n  display:flex !important; width:100% !important; min-width:0 !important; height:100% !important;\n  min-height:0 !important; padding:calc(.22 * var(--acg-unit)) !important; box-sizing:border-box !important; overflow:hidden !important;\n  border-radius:calc(1.6 * var(--acg-unit)) !important; border:1px solid rgba(255,255,255,.14) !important;\n  background:rgba(20,24,29,.76) !important; backdrop-filter:blur(16px) !important;\n  -webkit-backdrop-filter:blur(16px) !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 calc(.25 * var(--acg-unit)) calc(1 * var(--acg-unit)) rgba(0,0,0,.15) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-topnav-shell__items {\n  display:flex !important; flex:1 1 auto !important; min-width:0 !important;\n  justify-content:flex-start !important; overflow-x:auto !important; overflow-y:hidden !important;\n  scrollbar-width:none; padding:0 !important; margin:0 !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-topnav-shell__items::-webkit-scrollbar { display:none; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-topnav-shell__item.selector {\n  flex:0 0 auto !important; box-sizing:border-box !important; height:calc(calc(2.4 * var(--acg-unit)) * var(--acg-nav-scale)) !important;\n  font:500 calc(1 * var(--acg-unit))/1.2 system-ui,Roboto,Arial,sans-serif !important; letter-spacing:0 !important;\n  border-radius:calc(1.3 * var(--acg-unit)) !important; padding:0 calc(.85 * var(--acg-unit)) !important; margin:0 !important;\n  color:#f5f5f4 !important; white-space:nowrap !important; transform:none !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-topnav-shell__right {\n  display:flex !important; flex:0 0 auto !important; padding:0 0 0 calc(.3 * var(--acg-unit)) !important; margin:0 0 0 calc(.3 * var(--acg-unit)) !important;\n  border-left:1px solid rgba(255,255,255,.12);\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-topnav-shell__item--icon.selector,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-topnav-right__profile.selector {\n  display:inline-flex !important; align-items:center !important; justify-content:center !important;\n  width:calc(calc(2.4 * var(--acg-unit)) * var(--acg-nav-scale)) !important; min-width:0 !important; padding:0 !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-topnav-shell__item svg {\n  width:calc(1.25 * var(--acg-unit)) !important; height:calc(1.25 * var(--acg-unit)) !important; max-width:none !important; max-height:none !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-topnav-rightdock,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .head__menu-icon {\n  position:absolute !important; top:calc(.8 * var(--acg-unit)) !important; width:calc(calc(2.9 * var(--acg-unit)) * var(--acg-nav-scale)) !important;\n  height:calc(calc(2.9 * var(--acg-unit)) * var(--acg-nav-scale)) !important; min-width:0 !important; min-height:0 !important;\n  padding:calc(.22 * var(--acg-unit)) !important; box-sizing:border-box !important; border-radius:50% !important;\n  font-size:calc(1 * var(--acg-unit)) !important; transform:none !important; background:rgba(20,24,29,.76) !important;\n  border:1px solid rgba(255,255,255,.14) !important; box-shadow:none !important;\n  backdrop-filter:blur(16px) !important; -webkit-backdrop-filter:blur(16px) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .head__menu-icon { left:calc(1.4 * var(--acg-unit)) !important; right:auto !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .head__menu-icon svg,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .head__menu-icon > * { width:calc(1.35 * var(--acg-unit)) !important; height:calc(1.35 * var(--acg-unit)) !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-topnav-rightdock { right:calc(1.4 * var(--acg-unit)) !important; left:auto !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-topnav-right__profile-img { width:calc(1.8 * var(--acg-unit)) !important; height:calc(1.8 * var(--acg-unit)) !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-topnav-clock,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-topnav-shell__item[data-role=\"settings\"],\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-topnav-shell__item[data-role=\"favorite\"],\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-leftdock__item.acg-top-hidden { display:none !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-topnav-shell__item.focus,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-topnav-shell__item.is-active {\n  background:rgba(255,255,255,.15) !important; color:#fff !important; box-shadow:inset 0 0 0 1px rgba(255,255,255,.18) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-leftdock { top:calc(4.5 * var(--acg-unit)) !important; background:rgba(17,21,26,.94) !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-leftdock__item.focus,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .menu__item.focus,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .settings-folder.focus,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .settings-param.focus,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .selectbox-item.focus {\n  background:rgba(246,243,237,.18) !important; color:#fff !important;\n  box-shadow:inset 0 0 0 1px rgba(246,243,237,.5) !important; border-color:rgba(246,243,237,.5) !important;\n}\n/* Hero: one composition, no absolute pseudo-button over the synopsis. */\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-hero {\n  width:calc(100% + 5em) !important; margin:0 -2.5em calc(.8 * var(--acg-unit)) !important; height:75vh !important;\n  min-height:calc(29 * var(--acg-unit)) !important; max-height:calc(62 * var(--acg-unit)) !important; border-radius:0 !important; border:0 !important;\n  background:#0b0e12 !important; box-shadow:none !important; transform:none !important; overflow:hidden !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-hero__bg {\n  width:100% !important; height:100% !important; min-height:100% !important; object-fit:cover !important;\n  object-position:center 30% !important; border-radius:0 !important; transform:none !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-hero::before,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-detail::before {\n  content:\"\" !important; display:block !important; position:absolute; top:0; left:0; right:0; bottom:0;\n  pointer-events:none; z-index:2; border-radius:0 !important;\n  background:linear-gradient(90deg,rgba(6,9,13,.83) 0%,rgba(6,9,13,.58) 26%,rgba(6,9,13,.1) 65%,transparent 100%) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-hero::after,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-detail::after {\n  content:\"\" !important; display:block !important; position:absolute; left:0; right:0; bottom:0;\n  height:50%; pointer-events:none; z-index:2; background:linear-gradient(transparent,#0b0e12) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-hero__content {\n  position:absolute !important; top:auto !important; bottom:calc(4.5 * var(--acg-unit)) !important; left:calc(4.1 * var(--acg-unit)) !important; right:auto !important;\n  width:calc(38 * var(--acg-unit)) !important; max-width:54% !important; transform:none !important; z-index:4 !important;\n  display:flex !important; align-items:flex-start !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-hero__logo {\n  width:auto !important; max-width:calc(25 * var(--acg-unit)) !important; max-height:calc(5.1 * var(--acg-unit)) !important; object-position:left center !important; margin:0 0 calc(1 * var(--acg-unit)) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-hero__title {\n  font-size:calc(2.65 * var(--acg-unit)) !important; font-weight:600 !important; line-height:1.1 !important; letter-spacing:.015em !important;\n  color:#f8f6f1 !important; margin:0 0 calc(1 * var(--acg-unit)) !important; max-width:100%;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-hero__overview,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-detail-overview {\n  width:calc(32 * var(--acg-unit)) !important; max-width:100% !important; font-size:calc(1.05 * var(--acg-unit)) !important; line-height:1.48 !important;\n  color:rgba(246,244,240,.87) !important; font-weight:400 !important; margin:calc(.75 * var(--acg-unit)) 0 calc(1.25 * var(--acg-unit)) !important;\n  display:-webkit-box !important; -webkit-line-clamp:3 !important; -webkit-box-orient:vertical; overflow:hidden;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-metadata,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-tags { display:flex; align-items:center; flex-wrap:wrap; color:#e2e2df; font-size:calc(.88 * var(--acg-unit)); line-height:1.6; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-metadata > span { margin-right:calc(.7 * var(--acg-unit)); }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-tags > span {\n  padding:calc(.12 * var(--acg-unit)) calc(.52 * var(--acg-unit)); margin:calc(.3 * var(--acg-unit)) calc(.4 * var(--acg-unit)) 0 0; border:1px solid rgba(255,255,255,.19); border-radius:calc(.4 * var(--acg-unit)); background:rgba(19,23,28,.45);\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-enhanced .agnative-hero__year,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-enhanced .agnative-hero__meta { display:none !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-hero-actions { display:flex; align-items:center; flex-wrap:wrap; position:relative; z-index:5; padding:0; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-action,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-hero__play.selector {\n  position:relative !important; top:auto !important; right:auto !important; bottom:auto !important; left:auto !important;\n  display:inline-flex !important; flex:0 0 auto !important; align-items:center !important; justify-content:center !important;\n  height:calc(3 * var(--acg-unit)) !important; width:calc(3 * var(--acg-unit)) !important; min-width:0 !important; padding:0 !important; margin:0 calc(.6 * var(--acg-unit)) calc(.3 * var(--acg-unit)) 0 !important;\n  border-radius:50% !important; border:1px solid rgba(255,255,255,.2) !important;\n  background:rgba(23,27,32,.68) !important; color:#f6f4ef !important; font:500 calc(1 * var(--acg-unit))/1.2 system-ui,Roboto,Arial,sans-serif !important;\n  box-sizing:border-box !important; text-shadow:none !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.08) !important;\n  cursor:pointer; transform:none !important; outline:none; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-hero__play::after { content:none !important; display:none !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-action svg { width:calc(1.3 * var(--acg-unit)); height:calc(1.3 * var(--acg-unit)); flex-shrink:0; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-action:not(.acg-watch) > span { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-action.acg-watch {\n  width:auto !important; min-width:calc(10 * var(--acg-unit)) !important; padding:0 calc(1.35 * var(--acg-unit)) !important; border-radius:calc(1.7 * var(--acg-unit)) !important;\n  background:#f6f3ed !important; color:#11151a !important; border-color:#f6f3ed !important; font-size:calc(1.08 * var(--acg-unit)) !important; font-weight:650 !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-watch svg { margin-right:calc(.6 * var(--acg-unit)); }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-action.focus,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-action:hover,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-hero__play.focus {\n  outline:2px solid #f6f3ed !important; outline-offset:3px; box-shadow:0 calc(.2 * var(--acg-unit)) calc(.8 * var(--acg-unit)) rgba(0,0,0,.18) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-action[aria-pressed=\"true\"] { color:#f0dfbd !important; background:rgba(235,218,185,.2) !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-action[aria-pressed=\"true\"] .acg-heart { fill:currentColor; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-hero__indicators { bottom:calc(1.65 * var(--acg-unit)) !important; z-index:5 !important; background:rgba(8,11,15,.35) !important; box-shadow:none !important; }\n/* Deliberate row spacing replaces the tiny .12em + .32em upstream gap. */\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .activity .items-line {\n  min-height:0 !important; padding-top:0 !important; padding-bottom:calc(.75 * var(--acg-unit)) !important; margin-bottom:var(--acg-row-gap) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .activity .items-line__head { margin-bottom:calc(1.05 * var(--acg-unit)) !important; padding-bottom:calc(.35 * var(--acg-unit)) !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .items-line__title { font-weight:600 !important; letter-spacing:0 !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .items-line .card:not(.card--button-compact):not(.card--genre-compact):not(.streaming-card--button-compact) { width:var(--acg-card-width,22em) !important; flex:0 0 auto !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16[data-agnative-backdrop=\"off\"] .items-line .card:not(.card--button-compact):not(.card--genre-compact):not(.streaming-card--button-compact) { width:var(--acg-poster-width,16.25em) !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16[data-agnative-card-size=\"xs\"] { --acg-card-width:17.5em; --acg-poster-width:13em; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16[data-agnative-card-size=\"sm\"] { --acg-card-width:19.75em; --acg-poster-width:14.625em; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16[data-agnative-card-size=\"md\"] { --acg-card-width:22em; --acg-poster-width:16.25em; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16[data-agnative-card-size=\"lg\"] { --acg-card-width:24.25em; --acg-poster-width:17.875em; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16[data-agnative-card-size=\"xl\"] { --acg-card-width:26.5em; --acg-poster-width:19.5em; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .items-line .card__view { border-radius:calc(.65 * var(--acg-unit)) !important; box-shadow:none !important; }\n/* Detail header shares the hero composition; native watch/book handlers stay attached. */\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-detail { position:relative; min-height:72vh; overflow:hidden; padding:0 !important; margin-bottom:calc(2 * var(--acg-unit)) !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-detail .full-start__background {\n  top:0 !important; left:0 !important; width:100% !important; height:100% !important; object-fit:cover !important;\n  object-position:center 30%; mask-image:none !important; -webkit-mask-image:none !important; z-index:0 !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-detail .full-start__background.loaded { opacity:1 !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-detail .full-start-new__body {\n  position:relative !important; z-index:3; min-height:72vh; box-sizing:border-box; padding:calc(7 * var(--acg-unit)) calc(2.6 * var(--acg-unit)) calc(3.5 * var(--acg-unit)) !important;\n  align-items:flex-end !important; transform:none !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-detail .full-start-new__left { display:none !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-detail .full-start-new__right { flex:0 1 calc(42 * var(--acg-unit)) !important; width:58%; max-width:64%; margin:0 !important; padding:0 !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-detail .full-start-new__title { font-size:calc(2.55 * var(--acg-unit)) !important; line-height:1.12 !important; font-weight:600 !important; white-space:normal !important; overflow:visible !important; margin-bottom:calc(1 * var(--acg-unit)) !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-detail .full-start-new__tagline,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-detail .full-start-new__head,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-detail .full-start-new__details { display:none !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-detail .full-start-new__rate-line { margin:calc(.6 * var(--acg-unit)) 0 !important; font-size:calc(.85 * var(--acg-unit)); }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .full-start-new__buttons { display:flex !important; flex-wrap:wrap !important; overflow:visible !important; margin-top:calc(.6 * var(--acg-unit)) !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .full-start-new__buttons > .full-start__button {\n  display:inline-flex; align-items:center !important; justify-content:center !important; flex:0 0 auto !important;\n  height:calc(3 * var(--acg-unit)) !important; min-width:calc(3 * var(--acg-unit)) !important; width:calc(3 * var(--acg-unit)) !important; padding:0 !important; margin:0 calc(.6 * var(--acg-unit)) calc(.4 * var(--acg-unit)) 0 !important;\n  border-radius:50% !important; border:1px solid rgba(255,255,255,.2) !important; box-sizing:border-box;\n  color:#f6f3ed !important; background:rgba(23,27,32,.68) !important; box-shadow:none !important; transform:none !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .full-start-new__buttons > .full-start__button.hide { display:none !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .full-start-new__buttons > .button--play {\n  width:auto !important; min-width:calc(10 * var(--acg-unit)) !important; padding:0 calc(1.35 * var(--acg-unit)) !important; border-radius:calc(1.7 * var(--acg-unit)) !important;\n  background:#f6f3ed !important; color:#11151a !important; border-color:#f6f3ed !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .full-start-new__buttons > .button--play span { display:inline !important; font-size:calc(1.08 * var(--acg-unit)) !important; font-weight:650 !important; margin-left:calc(.6 * var(--acg-unit)) !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .full-start-new__buttons > .full-start__button:not(.button--play) span { display:none !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .full-start-new__buttons > .full-start__button svg { width:calc(1.25 * var(--acg-unit)) !important; height:calc(1.25 * var(--acg-unit)) !important; margin:0 !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .full-start-new__buttons > .full-start__button.focus { outline:2px solid #f6f3ed !important; outline-offset:3px !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .full-start-new ~ .items-line,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .full-start-new + * { transform:none !important; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-trailer-preview { position:absolute; top:0; left:0; right:0; bottom:0; z-index:1; overflow:hidden; pointer-events:none; opacity:0; transition:opacity .45s; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-trailer-playing { opacity:1; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-trailer-preview iframe,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-trailer-preview video { position:absolute; width:100%; height:100%; border:0; object-fit:cover; pointer-events:none; }\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-trailer-preview iframe {\n  top:50%; left:50%; width:100vw; height:56.25vw; min-width:100%; min-height:100%; transform:translate(-50%,-50%);\n}\n/* Respect AgNative's automatic low-power mode on televisions. */\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16[data-agnative-perf=\"low\"] .agnative-topnav-shell__inner,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16[data-agnative-perf=\"low\"] .head__menu-icon,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16[data-agnative-perf=\"low\"] .agnative-topnav-rightdock,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16[data-agnative-perf=\"low\"] .acg-action,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16[data-agnative-perf=\"ultra\"] .agnative-topnav-shell__inner,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16[data-agnative-perf=\"ultra\"] .head__menu-icon,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16[data-agnative-perf=\"ultra\"] .agnative-topnav-rightdock,\nbody.appletv-agnative-topnav.lmp-cinema-hero.acg-v16[data-agnative-perf=\"ultra\"] .acg-action {\n  backdrop-filter:none !important; -webkit-backdrop-filter:none !important;\n}\n@media(max-width:900px) {\n  body.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-topnav-shell { display:flex !important; left:calc(4.7 * var(--acg-unit)) !important; right:calc(4.7 * var(--acg-unit)) !important; }\n  body.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-topnav-shell__item.selector { font-size:calc(.88 * var(--acg-unit)) !important; padding:0 calc(.65 * var(--acg-unit)) !important; }\n  body.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-hero__content { left:calc(3 * var(--acg-unit)) !important; max-width:68% !important; }\n  body.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-detail .full-start-new__right { max-width:76%; width:76%; }\n}\n@media(max-width:600px) {\n  body.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-hero__content { left:calc(2.5 * var(--acg-unit)) !important; max-width:84% !important; bottom:calc(4 * var(--acg-unit)) !important; }\n  body.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .agnative-hero__title { font-size:calc(2 * var(--acg-unit)) !important; }\n  body.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-detail .full-start-new__right { max-width:100%; width:100%; }\n  body.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-detail .full-start-new__body { padding:calc(6 * var(--acg-unit)) calc(1.5 * var(--acg-unit)) calc(3 * var(--acg-unit)) !important; }\n}\n@media(prefers-reduced-motion:reduce) {\n  body.appletv-agnative-topnav.lmp-cinema-hero.acg-v16 .acg-trailer-preview { transition:none; }\n}\n";
+  var ready = false, syncTimer = null, startupTimer = null, pending = null;
+  var heroNode = null, controllerHero = null, heroObserver = null, fullState = null, watchers = [];
+  var player = null, preview = null, previewTimer = null, previewDeadline = null, epoch = 0;
+  var videoCache = {}, cacheOrder = [];
+  var diagnostics = {version: VERSION, trailer: 'idle'};
+  var preset = {
+    appletv_agnative_topnav_enabled: 'on', appletv_agnative_topnav_visible: 'true',
+    appletv_agnative_topnav_size: 'md', appletv_agnative_topnav_icons_order: 'end',
+    appletv_agnative_hero_enabled: 'true', appletv_agnative_hero_align: 'bottom',
+    appletv_agnative_hero_indicators: 'true', appletv_agnative_hero_interval: '40',
+    appletv_agnative_hero_animation: 'false',
+    appletv_agnative_hero_bg_anim: 'off', appletv_agnative_hero_quality: 'w1280',
+    appletv_agnative_hero_trailer: 'false', appletv_agnative_backdrop: 'on',
+    appletv_agnative_card_image_mode: 'backdrop', appletv_agnative_rating_style: 'mono'
   };
 
-  function get(key, fallback) {
-    try { return Lampa.Storage.get(key, fallback); }
-    catch (err) { return fallback; }
-  }
-  function set(key, val) {
-    try { Lampa.Storage.set(key, val); }
-    catch (err) { /* Keep default UI functional. */ }
-  }
-  function enabled() { return get(ENABLED, 'true') !== 'false'; }
-  function goldMode() {
-    var mode = String(get(GOLD_MODE, 'noir'));
-    return mode === 'classic' || mode === 'noir' ? mode : 'off';
-  }
-
-  function topbarScale() {
-    var v = String(get(TOPBAR_SCALE, '2.25'));
-    return v === '1' || v === '1.5' || v === '2' || v === '2.25' || v === '3' ? v : '2.25';
-  }
-
-  function snapshotOriginalSettings() {
-    if (get(SNAPSHOT, null) !== null) return;
+  function get(key, fallback) { try { return Lampa.Storage.get(key, fallback); } catch (_) { return fallback; } }
+  function set(key, value) { try { Lampa.Storage.set(key, value); } catch (_) {} }
+  function enabled() { return String(get(PREFIX + 'enabled', 'true')) !== 'false'; }
+  function qs(selector, root) { return (root || document).querySelector(selector); }
+  function all(selector, root) { return Array.prototype.slice.call((root || document).querySelectorAll(selector)); }
+  function element(value) { return value && (value.nodeType ? value : value[0]); }
+  function activePage() { return qs('.activity--active') || document; }
+  function connected(node) { return !!(node && document.documentElement.contains(node)); }
+  function remove(node) { if (node && node.parentNode) node.parentNode.removeChild(node); }
+  function notify(message) { try { Lampa.Noty.show(message); } catch (_) {} }
+  function remember(key) {
     var saved = {};
-    Object.keys(PRESET).forEach(function (key) {
+    try { saved = JSON.parse(get(PREFIX + 'original_values', '{}')) || {}; } catch (_) {}
+    if (!Object.prototype.hasOwnProperty.call(saved, key)) {
       saved[key] = get(key, null);
-    });
-    set(SNAPSHOT, JSON.stringify(saved));
+      set(PREFIX + 'original_values', JSON.stringify(saved));
+    }
   }
-
-  function applyPreset() {
-    snapshotOriginalSettings();
-    Object.keys(PRESET).forEach(function (key) {
-      set(key, PRESET[key]);
-    });
-    set(INITIALIZED, 'true');
+  function change(key, value) {
+    if (JSON.stringify(get(key, null)) === JSON.stringify(value)) return;
+    remember(key); set(key, value);
   }
-
-  function restorePreviousSettings() {
-    var raw = get(SNAPSHOT, null);
-    if (!raw) return;
-    try {
-      var original = JSON.parse(raw);
-      Object.keys(PRESET).forEach(function (key) {
-        if (!Object.prototype.hasOwnProperty.call(original, key)) return;
-        var value = original[key];
-        // Storage.set accepts values, including null; Lampa's own defaults
-        // take effect if the original setting did not exist.
-        set(key, value === null ? '' : value);
-      });
-    } catch (err) { /* Never crash the app if stored JSON is malformed. */ }
-    set(INITIALIZED, 'false');
+  function applyPreset() { Object.keys(preset).forEach(function (key) { change(key, preset[key]); }); }
+  function restore() {
+    var saved = {};
+    try { saved = JSON.parse(get(PREFIX + 'original_values', '{}')) || {}; } catch (_) {}
+    Object.keys(saved).forEach(function (key) { set(key, saved[key] === null ? '' : saved[key]); });
   }
-
-  var CSS = [
-    'body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero {',
-    '  width: calc(100% + 5em) !important;',
-    '  margin: -0.75em -2.5em 0 !important;',
-    '  height: 76vh !important;',
-    '  max-height: 980px !important;',
-    '  min-height: 420px !important;',
-    '  border: 0 !important;',
-    '  border-radius: 0 !important;',
-    '  box-shadow: none !important;',
-    '  overflow: hidden !important;',
-    '  background: #0c1019 !important;',
-    '}',
-    'body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__bg {',
-    '  width: 100% !important;',
-    '  height: 100% !important;',
-    '  min-height: 100% !important;',
-    '  object-fit: cover !important;',
-    '  object-position: center center !important;',
-    '  border-radius: 0 !important;',
-    '}',
-    'body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero::before {',
-    '  border-radius: 0 !important;',
-    '  background: linear-gradient(90deg, rgba(2,6,12,.82) 0%, rgba(3,7,14,.48) 28%, rgba(3,7,14,.08) 67%, transparent 86%) !important;',
-    '}',
-    'body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero::after {',
-    '  content: ""; display: block; position: absolute; pointer-events: none;',
-    '  left: 0; right: 0; bottom: 0; height: 48%; z-index: 1;',
-    '  background: linear-gradient(180deg, transparent 2%, rgba(7,9,14,.18) 35%, rgba(7,9,14,.92) 100%);',
-    '}',
-    'body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__content {',
-    '  top: auto !important; bottom: 9.4em !important;',
-    '  left: 4.3em !important; right: auto !important;',
-    '  transform: none !important; max-width: 40% !important;',
-    '  align-items: flex-start !important;',
-    '}',
-    'body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__logo {',
-    '  max-height: 7em !important; max-width: 86% !important;',
-    '  margin-bottom: .6em !important;',
-    '}',
-    'body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__title {',
-    '  font-weight: 750 !important; font-size: 2.25em !important;',
-    '  letter-spacing: -.015em !important;',
-    '}',
-    'body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__overview {',
-    '  font-size: 1.02em !important; font-weight: 450 !important;',
-    '  line-height: 1.5 !important; -webkit-line-clamp: 3 !important;',
-    '  max-width: 92% !important; margin-bottom: 0 !important;',
-    '}',
-    'body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.selector::after {',
-    '  content: "▶  Подробнее";',
-    '  display: inline-flex; align-items: center; justify-content: center;',
-    '  position: absolute; left: 4.3em; bottom: 4.35em;',
-    '  padding: .55em 1.15em; min-width: 8.8em;',
-    '  border-radius: 99em; box-sizing: border-box;',
-    '  font-size: 1.12rem; font-weight: 700; line-height: 1.45;',
-    '  color: #18181c; background: rgba(255,255,255,.95);',
-    '  box-shadow: 0 .35em 1.6em rgba(0,0,0,.3);',
-    '  pointer-events: none;',
-    '}',
-    'body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.selector.focus::after,',
-    'body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.selector.hover::after {',
-    '  background: #fff; box-shadow: 0 0 0 .14em rgba(255,255,255,.55), 0 .35em 1.4em rgba(0,0,0,.35);',
-    '}',
-    'body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__indicators {',
-    '  bottom: 2.5em !important;',
-    '  border-radius: 99em !important;',
-    '  background: rgba(7,9,14,.28) !important;',
-    '}',
-    'body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero + .items-line {',
-    '  position: relative !important; z-index: 11 !important;',
-    '  margin-top: -1em !important;',
-    '}',
-    // Page carousel row spacing: Lampa 3em * 1.2; AgNative .12em/.32em * 1.2.
-    // Scope to activity pages so player overlays keep their own spacing.
-    'body.appletv-agnative-topnav.lmp-cinema-hero .activity .items-line {',
-    '  padding-bottom: 3.6em !important;',
-    '}',
-    'body.appletv-agnative-topnav.lmp-cinema-hero .activity .items-line--type-default {',
-    '  padding-bottom: .144em !important;',
-    '  margin-bottom: .384em !important;',
-    '}',
-    '@media (max-width: 1000px) {',
-    '  body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero { height: 67vh !important; min-height: 325px !important; }',
-    '  body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__content { left: 3em !important; bottom: 7.6em !important; max-width: 51% !important; }',
-    '  body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.selector::after { left: 3em; bottom: 3em; }',
-    '}',
-    '@media (prefers-reduced-motion: reduce) {',
-    '  body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero { transition: none !important; }',
-    '}'
-  ].join('\n');
-
-  // The gold layer is self-contained and opt-in by body class. It does not
-  // load gold_theme.js, so Lampa only needs one custom plugin URL.
-  var GOLD_CSS = [
-    /* Gold Theme original-inspired scheme, warm cocoa / cream gradient. */
-    'body.lmp-cinema-hero.lmp-cinema-gold-classic { background:#564335 !important; color:#dfd9ce; }',
-    'body.lmp-cinema-hero.lmp-cinema-gold-classic.black--style { background:#201911 !important; }',
-    'body.lmp-cinema-gold-classic .card__vote { color:#dfd9ce; }',
-    'body.lmp-cinema-gold-classic .menu__item.focus, body.lmp-cinema-gold-classic .menu__item.traverse, body.lmp-cinema-gold-classic .menu__item.hover,',
-    'body.lmp-cinema-gold-classic .settings-folder.focus, body.lmp-cinema-gold-classic .settings-param.focus, body.lmp-cinema-gold-classic .selectbox-item.focus,',
-    'body.lmp-cinema-gold-classic .selectbox-item.hover, body.lmp-cinema-gold-classic .simple-button.focus, body.lmp-cinema-gold-classic .iptv-list__item.focus,',
-    'body.lmp-cinema-gold-classic .head__action.focus, body.lmp-cinema-gold-classic .head__action.hover,',
-    'body.lmp-cinema-gold-classic .player-panel .button.focus, body.lmp-cinema-gold-classic .search-source.active {',
-    ' background:linear-gradient(100deg,#fef4de 1%,#edcfab 100%) !important; color:#17130d !important; }',
-    'body.lmp-cinema-gold-classic .extensions__item, body.lmp-cinema-gold-classic .extensions__block-add { background-color:#423a32 !important; }',
-    'body.lmp-cinema-gold-classic .iptv-channel { background-color:#624e3f !important; }',
-    'body.lmp-cinema-gold-classic .torrent-file.focus, body.lmp-cinema-gold-classic .torrent-serial.focus { background:rgba(223,217,206,.35) !important; }',
-    'body.lmp-cinema-gold-classic .torrent-item__size, body.lmp-cinema-gold-classic .torrent-item__exe, body.lmp-cinema-gold-classic .torrent-serial__size { background:#dfd9ce; color:#17130d; }',
-    'body.lmp-cinema-gold-classic .agnative-topnav-shell__inner, body.lmp-cinema-gold-classic .agnative-topnav-rightdock {',
-    ' background:rgba(32,25,17,.57) !important; border-color:rgba(254,244,222,.22) !important; }',
-    'body.lmp-cinema-gold-classic .agnative-topnav-shell__item.is-active, body.lmp-cinema-gold-classic .agnative-topnav-shell__item.focus,',
-    'body.lmp-cinema-gold-classic .agnative-topnav-shell__item.hover { background:rgba(254,244,222,.21) !important; color:#fff4de !important; }',
-    'body.lmp-cinema-gold-classic .agnative-hero__play.selector::after {',
-    ' background:linear-gradient(100deg,#fff8e6,#edcfab) !important; color:#201911 !important; }',
-    'body.lmp-cinema-gold-classic .agnative-hero__indicator.active { background:#fef4de !important; }',
-
-    /* More restrained gold-on-graphite premium palette. */
-    'body.lmp-cinema-hero.lmp-cinema-gold-noir { background:#101114 !important; color:#f4f1ea; }',
-    'body.lmp-cinema-hero.lmp-cinema-gold-noir.black--style { background:#101114 !important; }',
-    'body.lmp-cinema-gold-noir .card__vote { color:#e9d7b6; }',
-    'body.lmp-cinema-gold-noir .menu__item.focus, body.lmp-cinema-gold-noir .menu__item.traverse, body.lmp-cinema-gold-noir .menu__item.hover,',
-    'body.lmp-cinema-gold-noir .settings-folder.focus, body.lmp-cinema-gold-noir .settings-param.focus, body.lmp-cinema-gold-noir .selectbox-item.focus,',
-    'body.lmp-cinema-gold-noir .selectbox-item.hover, body.lmp-cinema-gold-noir .simple-button.focus, body.lmp-cinema-gold-noir .iptv-list__item.focus,',
-    'body.lmp-cinema-gold-noir .head__action.focus, body.lmp-cinema-gold-noir .head__action.hover,',
-    'body.lmp-cinema-gold-noir .player-panel .button.focus, body.lmp-cinema-gold-noir .search-source.active {',
-    ' background:linear-gradient(105deg,#f4e5c7 0%,#d3ac74 100%) !important; color:#18140f !important; }',
-    'body.lmp-cinema-gold-noir .extensions__item, body.lmp-cinema-gold-noir .extensions__block-add { background:#282620 !important; }',
-    'body.lmp-cinema-gold-noir .torrent-file.focus, body.lmp-cinema-gold-noir .torrent-serial.focus { background:rgba(212,171,111,.20) !important; }',
-    'body.lmp-cinema-gold-noir .torrent-item__size, body.lmp-cinema-gold-noir .torrent-item__exe, body.lmp-cinema-gold-noir .torrent-serial__size { background:#e4cfaa; color:#18140f; }',
-    'body.lmp-cinema-gold-noir .agnative-topnav-shell__inner, body.lmp-cinema-gold-noir .agnative-topnav-rightdock {',
-    ' background:rgba(17,18,22,.60) !important; border:1px solid rgba(218,183,122,.26) !important;',
-    ' box-shadow:inset 0 1px 0 rgba(255,245,225,.10), 0 12px 30px rgba(0,0,0,.22) !important; }',
-    'body.lmp-cinema-gold-noir .agnative-topnav-shell__item.is-active, body.lmp-cinema-gold-noir .agnative-topnav-shell__item.focus,',
-    'body.lmp-cinema-gold-noir .agnative-topnav-shell__item.hover { background:rgba(218,183,122,.18) !important; color:#f5e8d1 !important; }',
-    'body.lmp-cinema-gold-noir .agnative-hero__play.selector::after {',
-    ' background:linear-gradient(100deg,#f4e5c7,#d3ac74) !important; color:#16120d !important; }',
-    'body.lmp-cinema-gold-noir .agnative-hero__indicator.active { background:#dfc08e !important; }',
-
-    /* Shared restrained gold accents for selection, playback and settings. */
-    'body.lmp-cinema-gold-classic .card.focus .card__view::after, body.lmp-cinema-gold-classic .card.hover .card__view::after,',
-    'body.lmp-cinema-gold-classic .extensions__item.focus::after, body.lmp-cinema-gold-classic .torrent-item.focus::after,',
-    'body.lmp-cinema-gold-classic .online-prestige.focus::after { border-color:#fef4de !important; }',
-    'body.lmp-cinema-gold-noir .card.focus .card__view::after, body.lmp-cinema-gold-noir .card.hover .card__view::after,',
-    'body.lmp-cinema-gold-noir .extensions__item.focus::after, body.lmp-cinema-gold-noir .torrent-item.focus::after,',
-    'body.lmp-cinema-gold-noir .online-prestige.focus::after { border-color:#d9b77a !important; }',
-    'body.lmp-cinema-gold-classic .time-line > div, body.lmp-cinema-gold-classic .player-panel__position { background-color:#fef4de !important; }',
-    'body.lmp-cinema-gold-noir .time-line > div, body.lmp-cinema-gold-noir .player-panel__position { background-color:#d9b77a !important; }',
-    'body.lmp-cinema-gold-classic .settings-folder.focus .settings-folder__icon,',
-    'body.lmp-cinema-gold-noir .settings-folder.focus .settings-folder__icon { filter:invert(1); }',
-    '@media (prefers-reduced-motion:reduce) {',
-    ' body.lmp-cinema-gold-classic .agnative-topnav-shell__item, body.lmp-cinema-gold-noir .agnative-topnav-shell__item { transition:none !important; }',
-    '}'
-  ].join('\n');
-
-  // Magnified AppleTV top bar, targeting exact class names from upstream v0.4.1.
-  // This enlarges *hit areas and SVGs*, not merely CSS-transforming their picture,
-  // so focus/navigation and pointer targeting remain aligned on Android TV.
-  // Center menu text is intentionally kept smaller than icons to avoid losing items.
-  function magnifiedTopbarCSS(multiplier, suffix) {
-    var factor = Number(multiplier);
-    var scope = 'body.appletv-agnative-topnav.lmp-cinema-hero.lmp-cinema-topbar-' + (suffix || multiplier) + 'x';
-    var height = (2.6 * factor).toFixed(2) + 'em';
-    var button = (2.16 * factor).toFixed(2) + 'em';
-    var icon = factor.toFixed(2) + 'em';
-    var menuIcon = (1.1 * factor).toFixed(2) + 'em';
-    var photo = (1.56 * factor).toFixed(2) + 'em';
-    var padding = (0.21 * factor).toFixed(2) + 'em ' + (0.32 * factor).toFixed(2) + 'em';
-    return [
-      scope + ' .agnative-topnav-shell { height:' + height + ' !important; max-width:calc(100vw - 34em) !important; }',
-      scope + ' .agnative-topnav-shell__inner { height:' + height + ' !important; min-height:' + height + ' !important; max-width:100% !important; box-sizing:border-box !important; padding:' + padding + ' !important; overflow-x:auto !important; overflow-y:hidden !important; scrollbar-width:none; }',
-      scope + ' .agnative-topnav-shell__inner::-webkit-scrollbar { display:none; }',
-      scope + ' .agnative-topnav-shell__item--icon.selector { height:' + button + ' !important; width:' + button + ' !important; min-width:' + button + ' !important; padding:0 !important; }',
-      scope + ' .agnative-topnav-shell__item--icon svg { width:' + icon + ' !important; height:' + icon + ' !important; max-width:none !important; max-height:none !important; }',
-      scope + ' .agnative-topnav-shell__item.selector:not(.agnative-topnav-shell__item--icon) { font-size:1.15em !important; height:' + (2.16 * factor / 1.15).toFixed(2) + 'em !important; padding:0 .78em !important; }',
-      scope + ' .agnative-topnav-rightdock { height:' + height + ' !important; min-height:' + height + ' !important; box-sizing:border-box !important; padding:' + padding + ' !important; gap:.14em !important; }',
-      scope + ' .agnative-topnav-rightdock .agnative-topnav-shell__item--icon.selector,' + scope + ' .agnative-topnav-rightdock .agnative-topnav-right__profile.selector { height:' + button + ' !important; width:' + button + ' !important; min-width:' + button + ' !important; }',
-      scope + ' .agnative-topnav-right__profile-img { width:' + photo + ' !important; height:' + photo + ' !important; max-width:none !important; max-height:none !important; }',
-      scope + ' .agnative-topnav-rightdock .agnative-topnav-clock { font-size:1.25em !important; height:' + (2.16 * factor / 1.25).toFixed(2) + 'em !important; min-width:' + (4.2 * factor / 1.25).toFixed(2) + 'em !important; padding:0 .5em !important; }',
-      scope + ' .head__menu-icon { width:' + height + ' !important; height:' + height + ' !important; min-width:' + height + ' !important; }',
-      scope + ' .head__menu-icon > *,' + scope + ' .head__menu-icon svg,' + scope + ' .head__menu-icon img { width:' + menuIcon + ' !important; height:' + menuIcon + ' !important; max-width:' + menuIcon + ' !important; max-height:' + menuIcon + ' !important; }',
-      '@media (max-width:1100px) { ' + scope + ' .agnative-topnav-shell { max-width:calc(100vw - 26em) !important; } }'
-    ].join('\n');
+  function visual() {
+    var body = document.body;
+    if (!body) return;
+    if (!enabled()) { body.classList.remove('lmp-cinema-hero', 'acg-v16'); return; }
+    body.classList.add('lmp-cinema-hero', 'acg-v16');
+    // Lampa scales body, not html. Freeze that base in px so nested controls
+    // stay proportional at 720p/1080p/4K without inheriting font multipliers.
+    var unit = parseFloat(window.getComputedStyle(body).fontSize) || 16;
+    body.style.setProperty('--acg-unit', unit + 'px');
+    var scale = String(get(PREFIX + 'topbar_scale', '1'));
+    if (['1', '1.1', '1.2'].indexOf(scale) < 0) scale = '1';
+    body.style.setProperty('--acg-nav-scale', scale);
+    var spacing = String(get(PREFIX + 'row_gap', '3.2'));
+    if (['2.4', '3.2', '4'].indexOf(spacing) < 0) spacing = '3.2';
+    body.style.setProperty('--acg-row-gap', (Number(spacing) * unit) + 'px');
+    if (!document.getElementById(STYLE_ID)) {
+      var style = document.createElement('style'); style.id = STYLE_ID; style.textContent = CSS;
+      (document.head || body).appendChild(style);
+    }
   }
-
-  var TOPBAR_CSS = magnifiedTopbarCSS(1.5, '1p5') + '\n' + magnifiedTopbarCSS(2) + '\n' + magnifiedTopbarCSS(2.25, '2p25') + '\n' + magnifiedTopbarCSS(3);
-  var TOPBAR_STYLE_ID = 'lmp-apple-cinema-topbar-style';
-  var DETAIL_STYLE_ID = 'lmp-apple-cinema-design-13';
-  function injectTopbarStyle() {
-    if (document.getElementById(TOPBAR_STYLE_ID)) return;
-    var node = document.createElement('style');
-    node.id = TOPBAR_STYLE_ID;
-    node.type = 'text/css';
-    node.textContent = TOPBAR_CSS;
-    (document.head || document.documentElement).appendChild(node);
+  var icons = {
+    play: '<path d="M8 5v14l11-7z" fill="currentColor" stroke="none"/>',
+    heart: '<path class="acg-heart" d="M20.5 5.5a5 5 0 0 0-7 0L12 7l-1.5-1.5a5 5 0 0 0-7 7L12 21l8.5-8.5a5 5 0 0 0 0-7z"/>',
+    folder: '<path d="M3 6h6l2 2h10v11H3z"/><path d="M12 11v5m-2.5-2.5h5"/>',
+    info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.1"/>',
+    next: '<path d="m9 5 7 7-7 7"/>',
+    refresh: '<path d="M20 5v6h-6M4 19v-6h6M5.5 9a7 7 0 0 1 12-3L20 9M4 15l2.5 3a7 7 0 0 0 12-3"/>'
+  };
+  function svg(name) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + icons[name] + '</svg>'; }
+  function label(node, text) { node.setAttribute('title', text); node.setAttribute('aria-label', text); }
+  function bind(node, fn) {
+    if (node.__acgBound) return;
+    node.__acgBound = true;
+    var last = 0;
+    function run(event) {
+      if (event) { event.preventDefault(); event.stopPropagation(); }
+      if (!enabled() || Date.now() - last < 250) return;
+      last = Date.now(); fn();
+    }
+    node.addEventListener('click', run);
+    node.addEventListener('keydown', function (event) { if (event.key === 'Enter' || event.key === ' ') run(event); });
+    if (window.$) window.$(node).on('hover:enter.acg', run);
   }
-
-
-  // Styles for elegant controls, 25% larger carousel covers and Gold typography.
-  // Unlike earlier versions, no settings/modal panel background or blur is overridden.
-  var DETAIL_CSS = "\n/* Apple Cinema Gold 1.3: color and typography only inside menus and settings.\n   Preserve existing panel sizes, positioning, backgrounds, blur and opacity. */\nbody.lmp-cinema-hero.lmp-cinema-gold-noir {\n  --acg-text:#f2e8d9;--acg-metal:#d6b780;--acg-dim:#c2ab88;\n  --acg-glow:rgba(216,177,109,.23);--acg-cream:#f3e8d0;\n  --acg-primary:linear-gradient(112deg,#f9eed8 0%,#d7b482 100%);\n}\nbody.lmp-cinema-hero.lmp-cinema-gold-classic {\n  --acg-text:#f2e5d4;--acg-metal:#e9cca5;--acg-dim:#d8bb98;\n  --acg-glow:rgba(250,222,173,.22);--acg-cream:#fff6e7;\n  --acg-primary:linear-gradient(112deg,#fff8e9 0%,#eac9a0 100%);\n}\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .menu__item,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .settings-folder,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .settings-param,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .settings__title,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .menu__title {\n  font-family:system-ui,Roboto,Arial,sans-serif !important;\n  font-weight:500 !important;\n  letter-spacing:.018em !important;\n  color:var(--acg-text) !important;\n  text-shadow:0 1px 5px rgba(0,0,0,.34);\n  transition:color .18s ease,background .18s ease,box-shadow .18s ease !important;\n}\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .settings__title,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .menu__title {\n  font-weight:600 !important;letter-spacing:.035em !important;\n  color:var(--acg-metal) !important;\n}\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .settings-folder__name,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .settings-param__name,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .menu__item-title {\n  font-weight:550 !important;letter-spacing:.02em !important;\n}\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .settings-param__descr,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .settings-param__description {\n  color:var(--acg-dim) !important;letter-spacing:.008em !important;\n}\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .menu__item.focus,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .menu__item.hover,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .menu__item.traverse,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .settings-folder.focus,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .settings-param.focus {\n  color:#231b13 !important;text-shadow:0 1px 0 rgba(255,255,255,.25) !important;\n  box-shadow:inset 0 1px 0 rgba(255,255,255,.38),0 5px 22px var(--acg-glow) !important;\n}\n/* The hero remains one real action: \"Подробнее\"; do not draw a fake \"Смотреть\" hit target. */\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.selector::after {\n  content:\"Подробнее\" !important;\n  font-family:system-ui,Roboto,Arial,sans-serif !important;\n  font-size:1.06rem !important;font-weight:620 !important;letter-spacing:.048em !important;\n  color:#241c13 !important;text-shadow:0 1px 0 rgba(255,255,255,.4) !important;\n  background:linear-gradient(115deg,rgba(255,252,244,.94),rgba(230,204,166,.81)) !important;\n  border:1px solid rgba(255,250,237,.66) !important;border-radius:.85em !important;\n  backdrop-filter:blur(16px) saturate(135%) !important;\n  -webkit-backdrop-filter:blur(16px) saturate(135%) !important;\n  box-shadow:inset 0 1px 0 rgba(255,255,255,.62),0 12px 32px rgba(0,0,0,.27),0 0 24px rgba(201,164,102,.10) !important;\n  transition:background .2s ease,box-shadow .2s ease !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.selector.focus::after,\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.selector.hover::after {\n  background:linear-gradient(115deg,#fffdf8,#e9c99b) !important;\n  box-shadow:inset 0 1px 0 #fff,0 0 0 2px rgba(247,225,190,.55),0 14px 36px rgba(0,0,0,.33) !important;\n}\n/* Film details: existing working watch/detail buttons, no event handler changes. */\nbody.lmp-cinema-hero .full-start__buttons .full-start__button,\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button,\nbody.lmp-cinema-hero .full-start-new__buttons .full-start-new__button,\nbody.lmp-cinema-hero .buttons--container .full-start__button {\n  font-family:system-ui,Roboto,Arial,sans-serif !important;\n  font-weight:600 !important;letter-spacing:.03em !important;\n  color:#f6e9d3 !important;text-shadow:0 1px 5px rgba(0,0,0,.35) !important;\n  background:linear-gradient(110deg,rgba(42,36,33,.56),rgba(101,79,54,.37)) !important;\n  border:1px solid rgba(238,206,159,.38) !important;\n  border-radius:.78em !important;\n  backdrop-filter:blur(13px) saturate(125%) !important;\n  -webkit-backdrop-filter:blur(13px) saturate(125%) !important;\n  box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 9px 24px rgba(0,0,0,.24) !important;\n  transition:color .18s ease,background .18s ease,box-shadow .18s ease !important;\n}\nbody.lmp-cinema-hero .full-start__buttons .full-start__button.view--online,\nbody.lmp-cinema-hero .full-start__buttons .full-start__button.view--torrent,\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button.view--online,\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button.view--torrent,\nbody.lmp-cinema-hero .buttons--container .full-start__button.view--online {\n  background:linear-gradient(112deg,rgba(253,242,222,.92),rgba(213,175,123,.84)) !important;\n  color:#201811 !important;text-shadow:0 1px 0 rgba(255,255,255,.25) !important;\n  border-color:rgba(255,249,227,.72) !important;\n}\nbody.lmp-cinema-hero .full-start__buttons .full-start__button.focus,\nbody.lmp-cinema-hero .full-start__buttons .full-start__button.hover,\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button.focus,\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button.hover,\nbody.lmp-cinema-hero .full-start-new__buttons .full-start-new__button.focus,\nbody.lmp-cinema-hero .buttons--container .full-start__button.focus {\n  background:linear-gradient(108deg,#fff7e9,#e6c28e) !important;color:#1b1510 !important;\n  text-shadow:none !important;border-color:rgba(255,248,229,.92) !important;\n  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 0 0 2px rgba(240,209,160,.50),0 12px 28px rgba(0,0,0,.34) !important;\n}\n/* Enlarge actual carousel card widths by 25%, preserving layout flow and focus.\n   Exclude compact service/genre cards and grids. Upstream default width: 17.6em. */\nbody.appletv-agnative-topnav.lmp-cinema-hero:not([data-agnative-backdrop=\"off\"]) .items-line .card:not(.card--button-compact):not(.card--genre-compact):not(.streaming-card--button-compact) {\n  width:22em !important;flex:0 0 auto !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero[data-agnative-card-size=\"xs\"]:not([data-agnative-backdrop=\"off\"]) .items-line .card:not(.card--button-compact):not(.card--genre-compact):not(.streaming-card--button-compact) {width:17.5em !important;}\nbody.appletv-agnative-topnav.lmp-cinema-hero[data-agnative-card-size=\"sm\"]:not([data-agnative-backdrop=\"off\"]) .items-line .card:not(.card--button-compact):not(.card--genre-compact):not(.streaming-card--button-compact) {width:19.75em !important;}\nbody.appletv-agnative-topnav.lmp-cinema-hero[data-agnative-card-size=\"md\"]:not([data-agnative-backdrop=\"off\"]) .items-line .card:not(.card--button-compact):not(.card--genre-compact):not(.streaming-card--button-compact) {width:22em !important;}\nbody.appletv-agnative-topnav.lmp-cinema-hero[data-agnative-card-size=\"lg\"]:not([data-agnative-backdrop=\"off\"]) .items-line .card:not(.card--button-compact):not(.card--genre-compact):not(.streaming-card--button-compact) {width:24.25em !important;}\nbody.appletv-agnative-topnav.lmp-cinema-hero[data-agnative-card-size=\"xl\"]:not([data-agnative-backdrop=\"off\"]) .items-line .card:not(.card--button-compact):not(.card--genre-compact):not(.streaming-card--button-compact) {width:26.5em !important;}\nbody.appletv-agnative-topnav.lmp-cinema-hero[data-agnative-backdrop=\"off\"] .items-line .card:not(.card--button-compact):not(.card--genre-compact):not(.streaming-card--button-compact) {width:16.25em !important;flex:0 0 auto !important;}\nbody.appletv-agnative-topnav.lmp-cinema-hero[data-agnative-card-size=\"xs\"][data-agnative-backdrop=\"off\"] .items-line .card:not(.card--button-compact):not(.card--genre-compact):not(.streaming-card--button-compact) {width:13em !important;flex:0 0 auto !important;}\nbody.appletv-agnative-topnav.lmp-cinema-hero[data-agnative-card-size=\"sm\"][data-agnative-backdrop=\"off\"] .items-line .card:not(.card--button-compact):not(.card--genre-compact):not(.streaming-card--button-compact) {width:14.625em !important;flex:0 0 auto !important;}\nbody.appletv-agnative-topnav.lmp-cinema-hero[data-agnative-card-size=\"md\"][data-agnative-backdrop=\"off\"] .items-line .card:not(.card--button-compact):not(.card--genre-compact):not(.streaming-card--button-compact) {width:16.25em !important;flex:0 0 auto !important;}\nbody.appletv-agnative-topnav.lmp-cinema-hero[data-agnative-card-size=\"lg\"][data-agnative-backdrop=\"off\"] .items-line .card:not(.card--button-compact):not(.card--genre-compact):not(.streaming-card--button-compact) {width:17.875em !important;flex:0 0 auto !important;}\nbody.appletv-agnative-topnav.lmp-cinema-hero[data-agnative-card-size=\"xl\"][data-agnative-backdrop=\"off\"] .items-line .card:not(.card--button-compact):not(.card--genre-compact):not(.streaming-card--button-compact) {width:19.5em !important;flex:0 0 auto !important;}\n@media(prefers-reduced-motion:reduce){\n  body.lmp-cinema-hero .full-start__button,\n  body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.selector::after {transition:none !important;}\n}";
-  function injectDetailStyle() {
-    if (document.getElementById(DETAIL_STYLE_ID)) return;
-    var node = document.createElement('style');
-    node.id = DETAIL_STYLE_ID;
-    node.type = 'text/css';
-    node.textContent = DETAIL_CSS;
-    (document.head || document.documentElement).appendChild(node);
+  function button(name, text, icon, fn) {
+    var node = document.createElement('div');
+    node.className = 'selector acg-action acg-' + name;
+    node.setAttribute('role', 'button'); node.setAttribute('tabindex', '0'); node.setAttribute('data-selector', 'true');
+    label(node, text); node.innerHTML = svg(icon);
+    var span = document.createElement('span'); span.textContent = text; node.appendChild(span);
+    bind(node, fn); return node;
   }
-
-
-  var NAV_CSS = "\n/* Champagne glass 1.5. No settings window geometry changes. */\nbody.appletv-agnative-topnav.lmp-cinema-hero.lmp-cinema-gold-noir {\n --acg-text:#f4eee7;--acg-metal:#d5c1a2;--acg-dim:#bdb1a4;--acg-glow:rgba(217,191,151,.12);\n}\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .menu__item.focus,\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .settings-folder.focus,\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .settings-param.focus,\nbody.lmp-cinema-hero.lmp-cinema-gold-noir .selectbox-item.focus {\n background:linear-gradient(100deg,rgba(216,197,170,.60),rgba(180,161,137,.52)) !important;\n color:#201e1b !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 4px 14px rgba(0,0,0,.15) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__inner,\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-rightdock {\n background:rgba(29,31,34,.42) !important;border:1px solid rgba(234,216,189,.14) !important;\n backdrop-filter:blur(18px) saturate(105%) !important;-webkit-backdrop-filter:blur(18px) saturate(105%) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 10px 26px rgba(0,0,0,.12) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__item.focus,\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__item.is-active {\n background:rgba(216,197,170,.19) !important;color:#f9f2e7 !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.18) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero {\n background:#0d1014 !important;border-radius:0 !important;box-shadow:none !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero::before {\n background:linear-gradient(90deg,rgba(9,12,16,.88) 0%,rgba(10,13,17,.59) 27%,rgba(10,13,17,.06) 66%,transparent 89%) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero::after {\n height:59% !important;background:linear-gradient(180deg,transparent 0%,rgba(10,12,15,.11) 38%,rgba(11,13,16,.95) 100%) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__title {\n color:#f0e8de !important;letter-spacing:.085em !important;font-weight:400 !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__overview {\n color:rgba(243,236,227,.82) !important;font-weight:400 !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__meta {\n display:block !important;font-size:.86em !important;color:#d3c3ae !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.selector::after {\n content:\"Подробнее\" !important;left:18em !important;bottom:4.35em !important;\n border-radius:1.25em !important;\n color:#eee5d8 !important;font-weight:500 !important;letter-spacing:.02em !important;\n background:linear-gradient(115deg,rgba(118,110,101,.32),rgba(43,45,48,.43)) !important;\n border:1px solid rgba(236,220,199,.24) !important;\n backdrop-filter:blur(18px) saturate(105%) !important;-webkit-backdrop-filter:blur(18px) saturate(105%) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.21),0 7px 18px rgba(0,0,0,.17) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.focus::after {\n border-color:rgba(248,230,204,.5) !important;box-shadow:0 0 0 2px rgba(236,218,187,.18) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__indicator.active {\n background:#ddcdb9 !important;\n}\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button {\n background:linear-gradient(110deg,rgba(102,96,88,.32),rgba(43,46,50,.42)) !important;\n color:#e9e0d7 !important;border:1px solid rgba(231,213,187,.25) !important;\n border-radius:1.3em !important;backdrop-filter:blur(20px) saturate(105%) !important;\n -webkit-backdrop-filter:blur(20px) saturate(105%) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 7px 18px rgba(0,0,0,.14) !important;\n}\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button.button--play {\n background:linear-gradient(115deg,rgba(224,211,193,.79),rgba(182,165,143,.67)) !important;\n color:#29241e !important;\n}\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button.focus {\n border-color:rgba(243,226,202,.78) !important;\n box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 0 0 2px rgba(235,214,181,.18) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .items-line .card__view {\n border-radius:.95em !important;box-shadow:0 7px 23px rgba(0,0,0,.16) !important;\n}\n\n\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell{\n left:5.6em !important;transform:none !important;\n width:calc(100vw - 19.4em) !important;max-width:calc(100vw - 19.4em) !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__inner{\n width:100% !important;max-width:100% !important;overflow:hidden !important;display:flex !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__items{\n flex:1 1 auto !important;min-width:0 !important;overflow-x:auto !important;overflow-y:hidden !important;\n justify-content:flex-start !important;scrollbar-width:none;overscroll-behavior-x:contain;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__items::-webkit-scrollbar{display:none;}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__items>.agnative-topnav-shell__item{\n flex-shrink:0 !important;white-space:nowrap !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__right{flex-shrink:0 !important;}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__item[data-role=\"favorite\"],\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell__item[data-role=\"settings\"],\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-clock{display:none !important;}\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-refresh{display:inline-flex !important;align-items:center;justify-content:center;}\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-refresh svg{width:1.75em !important;height:1.75em !important;stroke:currentColor;}\nbody.lmp-cinema-hero .agnative-leftdock__item.acg-moved-to-top{display:none !important;}\n@media(max-width:1000px){\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-topnav-shell{\n left:4.5em !important;width:calc(100vw - 15.2em) !important;max-width:calc(100vw - 15.2em) !important;}\n}\n\n\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-hero-actions {\n position:absolute;left:4.3em;bottom:4.4em;z-index:7;display:flex;gap:.6em;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-hero-actions .selector {\n display:inline-flex;justify-content:center;align-items:center;cursor:pointer;\n padding:.64em 1.0em;min-width:9.4em;box-sizing:border-box;\n color:#f4eadd;background:linear-gradient(115deg,rgba(104,99,93,.33),rgba(41,44,48,.45));\n font:500 1.03rem/1.35 system-ui,Roboto,Arial,sans-serif;letter-spacing:.014em;\n border-radius:1.26em;border:1px solid rgba(238,220,195,.26);\n backdrop-filter:blur(21px) saturate(105%);-webkit-backdrop-filter:blur(21px) saturate(105%);\n box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 6px 19px rgba(0,0,0,.15);\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-hero-actions .acg-watch {\n color:#29231d;background:linear-gradient(112deg,rgba(233,217,195,.85),rgba(180,160,136,.70));\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-hero-actions .acg-save {\n min-width:2.9em;width:2.9em;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-hero-actions .selector.focus,\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-hero-actions .selector.hover {\n border-color:rgba(252,237,213,.8);box-shadow:0 0 0 2px rgba(233,211,183,.20);\n}\n@media(max-width:1000px){\n body.appletv-agnative-topnav.lmp-cinema-hero .acg-hero-actions{left:3em;bottom:3em;}\n body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.selector::after{left:17.2em !important;bottom:3em !important;}\n}\n\n\nbody.lmp-cinema-hero .acg-trailer-preview{\n position:absolute;left:8em;top:0;width:100%;height:38em;z-index:1;\n background:transparent;pointer-events:none;overflow:hidden;\n -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 26%,#000 76%,transparent 100%);\n mask-image:linear-gradient(90deg,transparent 0%,#000 26%,#000 76%,transparent 100%);\n}\nbody.lmp-cinema-hero .acg-trailer-preview iframe{\n width:100%;height:100%;position:absolute;left:0;top:0;border:0;pointer-events:none;opacity:.83;\n}\n\nbody.lmp-cinema-hero .acg-trailer-preview{opacity:.82;pointer-events:none;}\nbody.lmp-cinema-hero .full-start__info,body.lmp-cinema-hero .full-start-new__info,body.lmp-cinema-hero .full-start__buttons,body.lmp-cinema-hero .full-start-new__buttons{position:relative;z-index:3;}\nbody.appletv-agnative-topnav.lmp-cinema-hero .acg-hero-actions .selector{box-shadow:inset 0 1px 0 rgba(255,255,255,.17),0 6px 14px rgba(0,0,0,.16);}\n";
-
-  var topnavLastSelection = '';
-  var navSyncTimeout = null;
-  var navWatchers = [];
-  var navSyncRuns = 0;
-  function nativeClick(n) {
-    if(!n)return false;
-    try{
-      if(window.$){window.$(n).trigger('hover:enter');return true;}
-      if(typeof n.click==='function'){n.click();return true;}
-    }catch(err){}
-    return false;
+  function nativeEnter(node) {
+    if (!node) return false;
+    if (window.$) window.$(node).trigger('hover:enter');
+    else if (node.click) node.click();
+    return true;
   }
-  function bindCinemaAction(n,handler){
-    if(!n||n.__acgBound)return;
-    n.__acgBound=true;
-    n.addEventListener('click',function(e){if(e){e.preventDefault();e.stopPropagation();}handler();});
-    n.addEventListener('keydown',function(e){if(e&&(e.key==='Enter'||e.key===' ')){e.preventDefault();handler();}});
-    try{if(window.$)window.$(n).on('hover:enter.acg',handler);}catch(err){}
+  function cardData(node) {
+    if (node.card_data) return node.card_data;
+    if (window.$) return window.$(node).data('card') || window.$(node).data('json');
+    return null;
   }
-  function syncTopCategories(){
-    if(!enabled()||!document.querySelectorAll)return;
-    var menu=document.querySelector('.menu');if(!menu)return;
-    var original=Array.prototype.slice.call(menu.querySelectorAll('.menu__item.selector[data-action]'));
-    var specs=[
-      {actions:['main'],re:/главная|^домой$/i,defaultAction:'main'},
-      {actions:['cartoon'],re:/мультфильм|мультики/i,defaultAction:'cartoon'},
-      {actions:['movie'],re:/^фильмы$/i,defaultAction:'movie'},
-      {actions:['tv'],re:/^сериалы$/i,defaultAction:'tv'},
-      {actions:['dorama','doramas','doramy'],re:/дорам/i},
-      {actions:['catalog','catalogue'],re:/каталог/i},
-      {actions:['filter','filters'],re:/фильтр/i},
-      {actions:['favorite','bookmarks'],re:/избранн|закладки/i}
-    ];
-    var chosen=[],seen={};
-    specs.forEach(function(spec){
-      var action='';
-      for(var i=0;i<original.length;i++){
-        var node=original[i],code=node.getAttribute('data-action')||'';
-        var label=(node.textContent||'').trim();
-        if(spec.actions.indexOf(code)>=0||spec.re.test(label)){action=code;break;}
+  function currentMovie(hero) {
+    var title = qs('.agnative-hero__title', hero), bg = qs('.agnative-hero__bg', hero);
+    var titleText = title ? title.textContent.trim() : '', image = bg ? bg.getAttribute('src') || '' : '';
+    var cards = all('.items-line .card', activePage()), candidate = null;
+    for (var i = 0; i < cards.length; i++) {
+      var data = cardData(cards[i]);
+      if (!data || !data.id || (data.title || data.name || '') !== titleText) continue;
+      candidate = data;
+      if (data.backdrop_path && image.indexOf(data.backdrop_path) >= 0) return data;
+    }
+    return candidate;
+  }
+  function isTV(movie) { return movie.media_type === 'tv' || !!(movie.first_air_date && !movie.release_date); }
+  function metadata(host, movie, fallbackGenres, showRating) {
+    host.textContent = '';
+    var line = document.createElement('div'); line.className = 'acg-metadata';
+    var tags = document.createElement('div'); tags.className = 'acg-tags';
+    var values = [];
+    if (movie) {
+      var year = String(movie.release_date || movie.first_air_date || '').slice(0, 4);
+      if (year) values.push(year);
+      values.push(isTV(movie) ? 'Сериал' : 'Фильм');
+      if (showRating !== false && Number(movie.vote_average) > 0) values.push('★ ' + Number(movie.vote_average).toFixed(1));
+      if (Number(movie.runtime) > 0) values.push(movie.runtime + ' мин');
+      if (isTV(movie) && Number(movie.number_of_seasons) > 0) values.push('Сезоны: ' + movie.number_of_seasons);
+      if (isTV(movie) && Number(movie.number_of_episodes) > 0) values.push('Серии: ' + movie.number_of_episodes);
+      try {
+        var tmdb = Lampa.Api && Lampa.Api.sources && Lampa.Api.sources.tmdb;
+        var age = tmdb && tmdb.parsePG && tmdb.parsePG(movie);
+        if (age) values.push(String(age));
+      } catch (_) {}
+    }
+    values.forEach(function (value) { var span = document.createElement('span'); span.textContent = value; line.appendChild(span); });
+    var genres = movie && movie.genres ? movie.genres.map(function (genre) { return typeof genre === 'string' ? genre : genre.name; }) : [];
+    if (!genres.length && fallbackGenres) genres = fallbackGenres.split(/\s*[·|,]\s*/);
+    genres.filter(Boolean).slice(0, 4).forEach(function (value) { var span = document.createElement('span'); span.textContent = value; tags.appendChild(span); });
+    host.appendChild(line); host.appendChild(tags);
+  }
+  function updateFavorite(node, movie) {
+    if (!node || !movie || !Lampa.Favorite || !Lampa.Favorite.check) return;
+    var status = Lampa.Favorite.check(movie), saved = !!status.book;
+    node.setAttribute('aria-pressed', saved ? 'true' : 'false');
+    label(node, saved ? 'Убрать из избранного' : 'В избранное');
+  }
+  function toggleFavorite(movie, node) {
+    if (!movie || !Lampa.Favorite || !Lampa.Favorite.toggle) { notify('Открой карточку, чтобы добавить фильм в избранное.'); return; }
+    Lampa.Favorite.toggle('book', movie); updateFavorite(node, movie);
+  }
+  function openFromHero(action, hero) {
+    stopTrailer('navigation');
+    var movie = currentMovie(hero);
+    if (action === 'favorite' && movie) { toggleFavorite(movie, qs('.acg-favorite', hero)); return; }
+    pending = {action:action, id:movie && movie.id, title:qs('.agnative-hero__title', hero).textContent, until:Date.now() + 12000};
+    nativeEnter(qs('.agnative-hero__play', hero));
+  }
+  function folderButton(root) {
+    var candidates = all('.buttons--container .full-start__button, .full-start-new__buttons .full-start__button', root);
+    for (var i = 0; i < candidates.length; i++) {
+      var node = candidates[i];
+      if (node.classList.contains('button--book') || node.classList.contains('hide') || node.classList.contains('acg-action')) continue;
+      if (/папк|подборк|коллекц/i.test(node.textContent + ' ' + (node.getAttribute('title') || ''))) return node;
+    }
+    return qs('.button--book', root);
+  }
+  function completePending(event) {
+    if (!pending || !event.data || !event.data.movie) return;
+    var action = pending, movie = event.data.movie, root = element(event.body);
+    pending = null;
+    if (Date.now() > action.until || !root) return;
+    if (action.id && String(action.id) !== String(movie.id)) return;
+    if (!action.id && action.title !== (movie.title || movie.name || '')) return;
+    // Full's own groupButtons/toggle runs after the completion event.
+    setTimeout(function () {
+      if (!enabled() || !connected(root)) return;
+      if (action.action === 'favorite') toggleFavorite(movie, qs('.acg-favorite', root));
+      else if (action.action === 'folder') nativeEnter(folderButton(root));
+      else if (action.action === 'watch') {
+        var play = qs('.button--play', root);
+        if (play && !play.classList.contains('hide')) nativeEnter(play);
+        else notify('Для просмотра выбери доступный источник в карточке фильма.');
       }
-      if(!action&&spec.defaultAction)action=spec.defaultAction;
-      if(action&&!seen[action]){chosen.push(action);seen[action]=true;}
+    }, 220);
+  }
+  function registerHeroController(hero) {
+    if (controllerHero === hero || !window.__AGNATIVE_HERO_CONTROLLER__ || !Lampa.Controller || !Lampa.Controller.add || !window.$) return;
+    controllerHero = hero;
+    function move(direction) { if (window.Navigator && Navigator.canmove(direction)) Navigator.move(direction); else if (direction === 'left') Lampa.Controller.toggle('menu'); }
+    Lampa.Controller.add('agnative_hero', {
+      toggle:function () {
+        if (!enabled() || !connected(hero)) { Lampa.Controller.toggle('content'); return; }
+        hero.classList.remove('agnative-hero--hidden', 'agnative-hero--unfocused');
+        document.body.classList.remove('agnative-hero-collapsed');
+        try {
+          var scrollBody = hero.closest('.scroll__body');
+          if (scrollBody) { scrollBody.style.transform = 'translate3d(0,0,0)'; scrollBody.style.webkitTransform = 'translate3d(0,0,0)'; }
+          var scrollHost = hero.closest('.scroll'); if (scrollHost) scrollHost.scrollTop = 0;
+        } catch (_) {}
+        Lampa.Controller.collectionSet(window.$(hero), false, true);
+        Lampa.Controller.collectionFocus(qs('.acg-watch', hero), window.$(hero), true);
+      },
+      left:function () { move('left'); }, right:function () { move('right'); },
+      up:function () { Lampa.Controller.toggle('head'); },
+      down:function () { Lampa.Controller.toggle('content'); },
+      back:function () { Lampa.Activity.backward(); }
     });
-    var serialized=JSON.stringify(chosen);
-    if(chosen.length&&serialized!==topnavLastSelection){
-      topnavLastSelection=serialized;
-      set('appletv_agnative_topnav_items',chosen);
+    var current = Lampa.Controller.enabled && Lampa.Controller.enabled();
+    if (current && current.name === 'agnative_hero') Lampa.Controller.toggle('agnative_hero');
+  }
+  function enhanceHero() {
+    var hero = qs('.agnative-hero', activePage());
+    if (!hero) {
+      if (heroObserver) heroObserver.disconnect();
+      heroObserver = null; heroNode = null; return;
+    }
+    var content = qs('.agnative-hero__content', hero), native = qs('.agnative-hero__play', hero);
+    if (!content || !native) return;
+    if (!hero.classList.contains('acg-enhanced')) {
+      hero.classList.add('acg-enhanced');
+      var meta = document.createElement('div'); meta.className = 'acg-meta-block';
+      content.insertBefore(meta, qs('.agnative-hero__overview', content));
+      var row = document.createElement('div'); row.className = 'acg-hero-actions';
+      row.appendChild(button('watch', 'Смотреть', 'play', function () { openFromHero('watch', hero); }));
+      row.appendChild(button('favorite', 'В избранное', 'heart', function () { openFromHero('favorite', hero); }));
+      row.appendChild(button('folder', 'В папку или подборку', 'folder', function () { openFromHero('folder', hero); }));
+      native.classList.add('acg-action', 'acg-details'); native.setAttribute('role', 'button'); label(native, 'Подробнее');
+      native.innerHTML = svg('info') + '<span>Подробнее</span>'; row.appendChild(native);
+      row.appendChild(button('next', 'Следующий фильм', 'next', function () {
+        var dots = all('.agnative-hero__indicator', hero), index = 0;
+        dots.forEach(function (dot, i) { if (dot.classList.contains('agnative-hero__indicator--active')) index = i; });
+        // AgNative's indicators use DOM click, not Lampa's hover:enter.
+        if (dots.length) dots[(index + 1) % dots.length].click();
+      }));
+      content.appendChild(row);
+    }
+    var movie = currentMovie(hero), genreNode = qs('.agnative-hero__meta', hero);
+    var genres = genreNode ? genreNode.textContent : '';
+    var yearNode = qs('.agnative-hero__year', hero), year = yearNode ? yearNode.textContent : '';
+    var key = JSON.stringify([movie && movie.id, genres, year, movie && movie.vote_average]);
+    if (hero.__acgMeta !== key) {
+      hero.__acgMeta = key;
+      metadata(qs('.acg-meta-block', hero), movie || {release_date:year}, genres);
+      updateFavorite(qs('.acg-favorite', hero), movie);
+    }
+    registerHeroController(hero);
+    if (heroNode !== hero && typeof MutationObserver === 'function') {
+      if (heroObserver) heroObserver.disconnect();
+      heroNode = hero; heroObserver = new MutationObserver(queueSync);
+      heroObserver.observe(content, {childList:true, subtree:true});
     }
   }
-  function addRefresh(){
-    var target=document.querySelector('.agnative-topnav-shell__right');
-    if(!target||target.querySelector('.acg-refresh'))return;
-    var n=document.createElement('div');
-    n.className='agnative-topnav-shell__item agnative-topnav-shell__item--icon selector acg-refresh';
-    n.setAttribute('data-role','refresh');n.setAttribute('data-selector','true');
-    n.setAttribute('tabindex','0');n.setAttribute('title','Обновить Lampa');
-    n.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.5 9a7 7 0 0 1 12-3l2 1M18.5 15a7 7 0 0 1-12 3l-2-1"/></svg>';
-    bindCinemaAction(n,function(){
-      try{
-        if(Lampa.Activity&&typeof Lampa.Activity.reload==='function'){Lampa.Activity.reload();return;}
-        if(window.location&&typeof window.location.reload==='function')window.location.reload();
-      }catch(err){}
+  function enhanceDetail(event) {
+    var root = element(event.body), movie = event.data && event.data.movie;
+    if (!root || !movie) return;
+    var header = qs('.full-start-new', root);
+    if (!header) return;
+    var right = qs('.full-start-new__right', header), actions = qs('.full-start-new__buttons', header);
+    if (!right || !actions) return;
+    header.classList.add('acg-detail');
+    header.__acgData = event.data;
+    var image = qs('.full-start__background', root);
+    if (image && image.parentNode !== header) {
+      header.__acgBackgroundParent = image.parentNode;
+      header.insertBefore(image, header.firstChild);
+    }
+    var meta = qs('.acg-meta-block', header);
+    if (!meta) { meta = document.createElement('div'); meta.className = 'acg-meta-block'; right.insertBefore(meta, qs('.full-start-new__rate-line', right)); }
+    metadata(meta, movie, '', false);
+    var overview = qs('.acg-detail-overview', header);
+    if (!overview) { overview = document.createElement('div'); overview.className = 'acg-detail-overview'; right.insertBefore(overview, actions); }
+    overview.textContent = movie.overview || '';
+    var favorite = qs('.acg-favorite', actions);
+    if (!favorite) {
+      favorite = button('favorite', 'В избранное', 'heart', function () { toggleFavorite(movie, favorite); });
+      favorite.classList.add('full-start__button'); actions.insertBefore(favorite, qs('.button--book', actions));
+    }
+    updateFavorite(favorite, movie);
+    all('.full-start__button', actions).forEach(function (node) {
+      if (node.classList.contains('button--play')) label(node, 'Смотреть');
+      else if (node.classList.contains('button--book')) label(node, 'В папку или подборку');
+      else if (node.classList.contains('button--options')) label(node, 'Ещё');
+      else if (!node.getAttribute('title')) label(node, node.textContent.trim());
     });
-    target.appendChild(n);
+    var trailer = qs('.view--trailer', root);
+    if (trailer && !trailer.classList.contains('hide') && !qs('.acg-manual-trailer', actions)) {
+      var manual = button('manual-trailer', 'Трейлер', 'play', function () { stopTrailer('manual'); nativeEnter(trailer); });
+      manual.classList.add('full-start__button'); actions.appendChild(manual);
+    }
+    fullState = {root:root, header:header, data:event.data};
+    scheduleTrailer(fullState);
   }
-  function keyboardToSidebar(){
-    var menu=document.querySelector('.menu');if(!menu)return;
-    var nodes=document.querySelectorAll('.head [title],.head [aria-label]');
-    var original=null;
-    for(var i=0;i<nodes.length;i++){
-      var n=nodes[i],name=((n.getAttribute('title')||'')+' '+(n.getAttribute('aria-label')||'')).toLowerCase();
-      if(/(?:remote|удал[её]нн).*(?:keyboard|клавиат)|(?:keyboard|клавиат)/i.test(name)){
-        original=n.closest&&n.closest('.head__action')||n;break;
+
+  /* Prefer videos already returned by Lampa. Its API keeps proxy/language handling. */
+  function candidates(data) {
+    var list = Array.isArray(data) ? data : (data && data.results) || [];
+    return list.filter(function (video) {
+      return video && /^(trailer|teaser)$/i.test(video.type || '') &&
+        ((String(video.site).toLowerCase() === 'youtube' && /^[A-Za-z0-9_-]{11}$/.test(video.key || '')) ||
+        (typeof video.url === 'string' && /^https:\/\/[^\s]+\.(mp4|webm)(\?|$)/i.test(video.url)));
+    }).sort(function (a, b) {
+      function score(v) { return (/^trailer$/i.test(v.type) ? 100 : 0) + (v.official ? 10 : 0); }
+      return score(b) - score(a);
+    });
+  }
+  function videos(data, done) {
+    var found = candidates(data.videos), movie = data.movie;
+    if (found.length) { done(found); return; }
+    var key = (isTV(movie) ? 'tv/' : 'movie/') + movie.id;
+    if (videoCache[key]) { done(videoCache[key]); return; }
+    var sources = Lampa.Api && Lampa.Api.sources;
+    var source = sources && (sources[movie.source] || sources.tmdb);
+    if (!source || typeof source.videos !== 'function') { done([]); return; }
+    var finished = false;
+    var timeout = setTimeout(function () { finish([]); }, 9000);
+    function finish(result) {
+      if (finished) return; finished = true; clearTimeout(timeout);
+      if (result.length) {
+        if (cacheOrder.length >= 20) delete videoCache[cacheOrder.shift()];
+        cacheOrder.push(key); videoCache[key] = result;
       }
+      done(result);
     }
-    if(!original)return; // Unknown remote keyboard plugin: do not hide a potentially vital control.
-    var link=menu.querySelector('.acg-remote-menu-link');
-    if(!link){
-      var group=menu.querySelector('.menu__case');if(!group)return;
-      link=document.createElement('div');
-      link.className='menu__item selector acg-remote-menu-link';
-      link.setAttribute('data-action','acg-remote-keyboard');
-      link.setAttribute('data-selector','true');link.setAttribute('tabindex','0');
-      link.innerHTML='<div class="menu__ico">⌨</div><div class="menu__text">Remote-клавиатура</div>';
-      bindCinemaAction(link,function(){nativeClick(original);});
-      group.appendChild(link);
+    try { source.videos({id:movie.id, method:isTV(movie) ? 'tv' : 'movie'}, function (result) { finish(candidates(result)); }, function () { finish([]); }); }
+    catch (_) { finish([]); }
+  }
+  function stopTrailer(reason) {
+    epoch++;
+    if (previewTimer) clearTimeout(previewTimer);
+    if (previewDeadline) clearTimeout(previewDeadline);
+    previewTimer = previewDeadline = null;
+    if (player) { try { player.destroy(); } catch (_) {} player = null; }
+    if (preview) {
+      var video = qs('video', preview); if (video) { video.pause(); video.removeAttribute('src'); video.load(); }
+      remove(preview); preview = null;
     }
-    if(link&&link.parentNode)original.style.display='none';
+    diagnostics.trailer = reason || 'stopped';
   }
-  function hideMovedSidebarItems(){
-    var dock=document.querySelector('.agnative-leftdock');
-    var top=document.querySelector('.agnative-topnav-shell__items');
-    if(!dock||!top)return;
-    var moved={};
-    Array.prototype.slice.call(top.querySelectorAll('.agnative-topnav-shell__item[data-action]')).forEach(function(x){
-      moved[x.getAttribute('data-action')]=true;
-    });
-    Array.prototype.slice.call(dock.querySelectorAll('.agnative-leftdock__item[data-action]')).forEach(function(x){
-      var hidden=!!moved[x.getAttribute('data-action')];
-      if(hidden&&!x.classList.contains('acg-moved-to-top'))x.classList.add('acg-moved-to-top');
-      if(!hidden&&x.classList.contains('acg-moved-to-top'))x.classList.remove('acg-moved-to-top');
-    });
-  }
-  function scrollFocusedTab(){
-    var wrap=document.querySelector('.agnative-topnav-shell__items');
-    if(!wrap||wrap.__acgScrollBound)return;
-    wrap.__acgScrollBound=true;
-    wrap.addEventListener('focusin',function(e){
-      try{e.target.scrollIntoView({block:'nearest',inline:'nearest'});}catch(err){}
-    });
-    try{
-      if(window.$)window.$(wrap).on('hover:focus.acg', '.agnative-topnav-shell__item',function(){
-        try{this.scrollIntoView({block:'nearest',inline:'nearest'});}catch(err){}
-      });
-    }catch(err){}
-  }
-  function syncNavigation(){
-    if(!enabled()||!document.body)return;
-    try{syncTopCategories();addRefresh();keyboardToSidebar();hideMovedSidebarItems();scrollFocusedTab();syncHeroActions();}
-    catch(err){try{console.warn('[Apple Cinema Gold] Navigation:',err);}catch(ignore){}}
-  }
-  function queueNavigation(){
-    if(navSyncTimeout)return;
-    navSyncTimeout=setTimeout(function(){navSyncTimeout=null;syncNavigation();},200);
-  }
-  function watchNavigation(){
-    if(!enabled()||typeof MutationObserver!=='function')return;
-    var targets=[document.querySelector('.menu'),document.querySelector('.agnative-leftdock')];
-    targets.forEach(function(node){
-      if(!node||node.__acgObserved)return;
-      node.__acgObserved=true;
-      var obs=new MutationObserver(queueNavigation);
-      obs.observe(node,{childList:true,subtree:false});
-      navWatchers.push(obs);
-    });
-  }
-  function beginNavigation(){
-    if(!enabled())return;
-    syncNavigation();watchNavigation();
-    if(navSyncRuns>0)return;
-    var attempts=0;
-    var timer=setInterval(function(){
-      attempts++;
-      if(!enabled()||attempts>=18)clearInterval(timer);
-      else{syncNavigation();watchNavigation();}
-    },850);
-    navSyncRuns=1;
-  }
-
-
-  var pendingHeroAction=null,pendingHeroTimer=null;
-  function clearHeroAction(){
-    pendingHeroAction=null;
-    if(pendingHeroTimer){clearTimeout(pendingHeroTimer);pendingHeroTimer=null;}
-  }
-  function startHeroAction(action){
-    var src=document.querySelector('.agnative-hero__play');
-    if(!src)return;
-    clearHeroAction();
-    pendingHeroAction=action;
-    pendingHeroTimer=setTimeout(clearHeroAction,9000);
-    nativeClick(src);
-  }
-  function syncHeroActions(){
-    var hero=document.querySelector('.agnative-hero');
-    if(!hero||hero.querySelector('.acg-hero-actions')||!hero.querySelector('.agnative-hero__play'))return;
-    var row=document.createElement('div');row.className='acg-hero-actions';
-    var watch=document.createElement('div');
-    watch.className='selector acg-watch';
-    watch.setAttribute('data-selector','true');watch.setAttribute('tabindex','0');
-    watch.textContent='▶ Смотреть';
-    bindCinemaAction(watch,function(){startHeroAction('watch');});
-    var book=document.createElement('div');
-    book.className='selector acg-save';
-    book.setAttribute('data-selector','true');book.setAttribute('tabindex','0');
-    book.setAttribute('title','Добавить в избранное или папку');
-    book.textContent='♡';
-    bindCinemaAction(book,function(){startHeroAction('book');});
-    row.appendChild(watch);row.appendChild(book);hero.appendChild(row);
-  }
-  function heroCardComplete(e) {
-    if(!e||!(/^(complite|complete)$/.test(String(e.type)))||!pendingHeroAction)return;
-    var action=pendingHeroAction;
-    clearHeroAction();
-    var el=e.body&&(e.body[0]||e.body);
-    if(!el||!el.querySelector)return;
-    var btn=el.querySelector(action==='book'?'.full-start__button.button--book':'.full-start__button.button--play');
-    if(btn&&!btn.classList.contains('hide')){
-      setTimeout(function(){if(btn.isConnected!==false)nativeClick(btn);},180);
-    }
-  }
-
-
-  var TRAILER_KEY=STORAGE_PREFIX+'trailer_preview';
-  var previewTimer=null,previewNode=null,previewAbort=null,previewEpoch=0;
-  var trailerCache={},trailerCacheCount=0;
-  function stopTrailerPreview(){
-    previewEpoch++;
-    if(previewTimer){clearTimeout(previewTimer);previewTimer=null;}
-    if(previewAbort){try{previewAbort.abort();}catch(err){}previewAbort=null;}
-    if(previewNode){try{previewNode.remove();}catch(err){}previewNode=null;}
-  }
-  function trailerIdFromTMDB(result){
-    var list=(result&&result.results)||[];
-    var candidates=list.filter(function(x){
-      return x&&x.site==='YouTube'&&x.type==='Trailer'&&typeof x.key==='string'&&/^[A-Za-z0-9_-]{11}$/.test(x.key);
-    });
-    candidates.sort(function(a,b){return Number(!!b.official)-Number(!!a.official);});
-    return candidates.length?candidates[0].key:null;
-  }
-  function getTrailer(kind,id,callback){
-    var cacheKey=kind+'/'+id;
-    if(Object.prototype.hasOwnProperty.call(trailerCache,cacheKey))return callback(trailerCache[cacheKey]);
-    if(typeof window.fetch!=='function'||!Lampa.TMDB||typeof Lampa.TMDB.api!=='function'||typeof Lampa.TMDB.key!=='function')return callback(null);
-    var url=Lampa.TMDB.api(kind+'/'+encodeURIComponent(id)+'/videos');
-    var apiKey=Lampa.TMDB.key();
-    if(typeof url!=='string'||!/^https:\/\//.test(url)||!apiKey)return callback(null);
-    previewAbort=typeof AbortController==='function'?new AbortController():null;
-    var options=previewAbort?{signal:previewAbort.signal}:{};
-    function request(lang){
-      var link=url+(url.indexOf('?')>=0?'&':'?')+'api_key='+encodeURIComponent(apiKey)+'&language='+encodeURIComponent(lang);
-      return window.fetch(link,options).then(function(r){if(!r.ok)throw Error('TMDB request');return r.json();});
-    }
-    request('ru-RU').then(function(data){
-      var found=trailerIdFromTMDB(data);
-      if(found)return found;
-      return request('en-US').then(trailerIdFromTMDB);
-    }).then(function(found){if(trailerCacheCount>=20){trailerCache={};trailerCacheCount=0;}trailerCache[cacheKey]=found||null;trailerCacheCount++;callback(found||null);})
-    .catch(function(){callback(null);});
-  }
-  function startBackgroundTrailer(e){
-    if(!enabled()||get(TRAILER_KEY,'true')==='false')return;
-    if(window.innerWidth&&window.innerWidth<800)return;
-    if(typeof window.matchMedia==='function'&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-    var body=e.body&&(e.body[0]||e.body),film=e.data&&e.data.movie;
-    if(!body||!film||!film.id||typeof body.querySelector!=='function')return;
-    var img=body.querySelector('.full-start__background, .full-start-new__background, .full-start__bg, .full-start-new__bg');
-    if(!img)return;
-    stopTrailerPreview();
-    var token=previewEpoch;
-    var kind=(film.name||film.first_air_date)?'tv':'movie';
-    previewTimer=setTimeout(function(){
-      previewTimer=null;
-      getTrailer(kind,film.id,function(key){
-        if(!key||token!==previewEpoch||!img.parentNode||!enabled())return;
-        var holder=document.createElement('div');
-        holder.className='acg-trailer-preview';
-        holder.style.zIndex='1';holder.style.pointerEvents='none';
-        holder.setAttribute('aria-hidden','true');
-        var frame=document.createElement('iframe');
-        frame.setAttribute('allow','autoplay; encrypted-media; picture-in-picture');
-        frame.setAttribute('loading','lazy');
-        frame.setAttribute('tabindex','-1');
-        frame.src='https://www.youtube-nocookie.com/embed/'+encodeURIComponent(key)+'?autoplay=1&mute=1&controls=0&playsinline=1&loop=1&rel=0&playlist='+encodeURIComponent(key);
-        frame.onerror=function(){if(previewNode===holder)stopTrailerPreview();};
+  function scheduleTrailer(state) {
+    stopTrailer('waiting');
+    if (!enabled() || String(get(PREFIX + 'trailer_preview', 'true')) === 'false') { diagnostics.trailer = 'disabled'; return; }
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) { diagnostics.trailer = 'reduced-motion'; return; }
+    if (state.data.movie.adult || (window.lampa_settings && lampa_settings.disable_features && lampa_settings.disable_features.trailers)) return;
+    var token = epoch;
+    function valid() { return token === epoch && enabled() && connected(state.header) && activePage().contains(state.header) && !document.hidden; }
+    function fail(reason) { if (token === epoch) stopTrailer(reason); }
+    previewTimer = setTimeout(function () {
+      previewTimer = null; if (!valid()) return;
+      diagnostics.trailer = 'loading-videos';
+      videos(state.data, function (list) {
+        if (!valid()) return;
+        if (!list.length) { fail('no-trailer'); return; }
+        var selected = list[0];
+        var holder = document.createElement('div'); holder.className = 'acg-trailer-preview'; holder.setAttribute('aria-hidden', 'true');
+        state.header.insertBefore(holder, state.header.firstChild); preview = holder;
+        function playing() {
+          if (!valid()) return;
+          if (previewDeadline) clearTimeout(previewDeadline); previewDeadline = null;
+          holder.classList.add('acg-trailer-playing'); diagnostics.trailer = 'playing';
+        }
+        previewDeadline = setTimeout(function () { fail('playback-timeout'); }, 18000);
+        if (selected.url && /\.(mp4|webm)(\?|$)/i.test(selected.url)) {
+          var video = document.createElement('video'); video.muted = true; video.autoplay = true; video.loop = true;
+          video.setAttribute('playsinline', ''); video.setAttribute('muted', ''); video.setAttribute('tabindex', '-1');
+          video.onplaying = playing; video.onerror = function () { fail('video-error'); };
+          holder.appendChild(video); video.src = selected.url;
+          var promise = video.play(); if (promise && promise.catch) promise.catch(function () { fail('autoplay-blocked'); });
+          return;
+        }
+        // An HTTPS bridge supplies a real origin/referrer even when Lampa runs
+        // from file:// in an Android WebView. Never forge the YouTube origin.
+        diagnostics.trailer = 'loading-youtube';
+        var frame = document.createElement('iframe'); frame.setAttribute('tabindex', '-1');
+        frame.setAttribute('title', 'Фоновый трейлер'); frame.setAttribute('allow', 'autoplay; encrypted-media');
+        frame.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+        var bridgeToken = 'acg_' + Date.now() + '_' + epoch + '_' + Math.random().toString(36).slice(2);
+        function receive(event) {
+          if (!valid() || event.source !== frame.contentWindow || event.origin !== TRAILER_ORIGIN) return;
+          var message = event.data;
+          if (!message || message.acgToken !== bridgeToken) return;
+          if (message.state === 'playing') playing();
+          else if (message.state === 'error') fail('youtube-error-' + String(message.code || 'unknown'));
+          else if (message.state === 'blocked') fail('autoplay-blocked');
+        }
+        window.addEventListener('message', receive);
+        player = {destroy:function () {
+          window.removeEventListener('message', receive);
+          try { frame.contentWindow.postMessage({acgToken:bridgeToken, command:'destroy'}, TRAILER_ORIGIN); } catch (_) {}
+          remove(frame);
+        }};
+        frame.src = TRAILER_PAGE + '?v=' + VERSION + '&video=' + selected.key + '&token=' + bridgeToken;
+        frame.onerror = function () { fail('youtube-unavailable'); };
         holder.appendChild(frame);
-        img.parentNode.insertBefore(holder,img.nextSibling);
-        previewNode=holder;
       });
-    },3200);
-  }
-  function onDetailEvent(e){
-    if(!e||!(/^(complite|complete)$/.test(String(e.type))))return;
-    startBackgroundTrailer(e);
-  }
-  function initTrailerPreview(){
-    if(!window.Lampa||!Lampa.Listener||typeof Lampa.Listener.follow!=='function')return;
-    try{
-      Lampa.Listener.follow('full',onDetailEvent);
-      Lampa.Listener.follow('player',stopTrailerPreview);
-      Lampa.Listener.follow('activity',function(){
-        try{
-          var current=Lampa.Activity&&Lampa.Activity.active&&Lampa.Activity.active();
-          if(current&&current.component&&current.component!=='full')stopTrailerPreview();
-        }catch(err){}
-      });
-    }catch(err){}
+    }, 1800);
   }
 
-  function injectNavStyle(){if(document.getElementById(NAV_STYLE_ID))return;var n=document.createElement('style');n.id=NAV_STYLE_ID;n.textContent=NAV_CSS;(document.head||document.documentElement).appendChild(n);}
-
-  function injectGoldStyle() {
-    if (document.getElementById(GOLD_STYLE_ID)) return;
-    var node = document.createElement('style');
-    node.id = GOLD_STYLE_ID;
-    node.type = 'text/css';
-    node.textContent = GOLD_CSS;
-    (document.head || document.documentElement).appendChild(node);
-  }
-
-  function injectStyle() {
-    if (document.getElementById(STYLE_ID)) return;
-    var style = document.createElement('style');
-    style.id = STYLE_ID;
-    style.type = 'text/css';
-    style.textContent = CSS;
-    (document.head || document.documentElement).appendChild(style);
-  }
-  function updateVisual() {
-    if (!document.body) return;
-    GOLD_CLASSES.forEach(function (name) { document.body.classList.remove(name); });
-    TOPBAR_CLASSES.forEach(function (name) { document.body.classList.remove(name); });
-    if (enabled()) {
-      injectStyle();
-      document.body.classList.add('lmp-cinema-hero');
-      var scale = topbarScale();
-      if (scale !== '1') {
-        injectTopbarStyle();
-        document.body.classList.add('lmp-cinema-topbar-' + (scale === '1.5' ? '1p5' : scale === '2.25' ? '2p25' : scale) + 'x');
+  function syncCategories() {
+    var menu = qs('.menu'); if (!menu) return;
+    var source = all('.menu__item.selector[data-action]', menu), result = [];
+    var groups = [ ['main', /^главная$|home/i], ['cartoon', /мультфильм/i], ['movie', /^фильмы$/i], ['tv', /^сериалы$/i],
+      ['dorama', /дорам/i], ['catalog', /каталог/i], ['filter', /фильтр/i], ['favorite', /избранн|закладки/i] ];
+    groups.forEach(function (group) {
+      for (var i = 0; i < source.length; i++) {
+        var node = source[i], action = node.getAttribute('data-action');
+        if (action === group[0] || group[1].test(node.textContent.trim())) { if (result.indexOf(action) < 0) result.push(action); break; }
       }
-      var mode = goldMode();
-      if (mode !== 'off') {
-        injectGoldStyle();
-        document.body.classList.add('lmp-cinema-gold-' + mode);
+    });
+    if (result.length) change('appletv_agnative_topnav_items', result);
+    var wrap = qs('.agnative-topnav-shell__items');
+    if (wrap) {
+      var moved = {};
+      all('[data-action]', wrap).forEach(function (node) { moved[node.getAttribute('data-action')] = true; });
+      all('.agnative-leftdock__item[data-action]').forEach(function (node) { node.classList.toggle('acg-top-hidden', !!moved[node.getAttribute('data-action')]); });
+      if (!wrap.__acgFocus) {
+        wrap.__acgFocus = true;
+        function scroll(node) { var left = node.offsetLeft, right = left + node.offsetWidth; if (left < wrap.scrollLeft) wrap.scrollLeft = left; else if (right > wrap.scrollLeft + wrap.clientWidth) wrap.scrollLeft = right - wrap.clientWidth; }
+        wrap.addEventListener('focusin', function (event) { scroll(event.target); });
+        if (window.$) window.$(wrap).on('hover:focus.acg', '.agnative-topnav-shell__item', function () { scroll(this); });
       }
-      injectDetailStyle();
-      injectNavStyle();
-    } else {
-      document.body.classList.remove('lmp-cinema-hero');
+    }
+    var right = qs('.agnative-topnav-shell__right');
+    if (right && !qs('.acg-refresh', right)) {
+      var refresh = button('refresh', 'Обновить', 'refresh', function () { if (Lampa.Activity.reload) Lampa.Activity.reload(); else location.reload(); });
+      refresh.className = 'agnative-topnav-shell__item agnative-topnav-shell__item--icon selector acg-refresh';
+      refresh.setAttribute('data-role', 'refresh'); right.appendChild(refresh);
+    }
+    var keyboard = all('.head [title], .head [aria-label]').filter(function (node) { return /keyboard|клавиат/i.test((node.getAttribute('title') || '') + (node.getAttribute('aria-label') || '')); })[0];
+    if (keyboard && !qs('.acg-keyboard', menu)) {
+      var group = qs('.menu__list', menu) || qs('.menu__case', menu);
+      if (group) {
+        var target = keyboard.closest ? keyboard.closest('.head__action') || keyboard : keyboard;
+        var link = button('keyboard', 'Remote-клавиатура', 'info', function () { nativeEnter(target); });
+        link.className = 'menu__item selector acg-keyboard'; link.setAttribute('data-action', 'acg-remote-keyboard');
+        link.innerHTML = '<div class="menu__ico">⌨</div><div class="menu__text">Remote-клавиатура</div>';
+        group.appendChild(link); target.style.display = 'none';
+      }
     }
   }
-
+  function observe(node, deep) {
+    if (!node || node.__acgWatched || typeof MutationObserver !== 'function') return;
+    node.__acgWatched = true;
+    var observer = new MutationObserver(function (records) {
+      for (var i = 0; i < records.length; i++) {
+        var nodes = records[i].addedNodes;
+        for (var j = 0; j < nodes.length; j++) if (nodes[j].nodeType === 1) { queueSync(); return; }
+        if (records[i].removedNodes.length && heroNode && !connected(heroNode)) { queueSync(); return; }
+      }
+    });
+    observer.observe(node, {childList:true, subtree:!!deep}); watchers.push({node:node, observer:observer});
+  }
+  function sync() {
+    syncTimer = null; if (!enabled()) return;
+    try {
+      visual(); syncCategories(); enhanceHero();
+      watchers = watchers.filter(function (watch) { if (!connected(watch.node)) { watch.observer.disconnect(); delete watch.node.__acgWatched; return false; } return true; });
+      var header = qs('.acg-detail', activePage());
+      if (header && header.__acgData && (!fullState || fullState.header !== header)) {
+        fullState = {root:header.parentNode, header:header, data:header.__acgData}; scheduleTrailer(fullState);
+      }
+      observe(qs('.head__body'), true); observe(qs('.menu__list'), true); observe(qs('.agnative-leftdock'), false);
+      observe(qs('.activity--active .activity__body') || qs('.activity--active'), true);
+    } catch (err) { diagnostics.lastError = String(err.message || err); }
+  }
+  function queueSync() { if (!syncTimer && enabled()) syncTimer = setTimeout(sync, 120); }
+  function cleanup() {
+    stopTrailer('disabled'); pending = null; controllerHero = null;
+    if (syncTimer) clearTimeout(syncTimer); syncTimer = null;
+    if (startupTimer) clearInterval(startupTimer); startupTimer = null;
+    watchers.forEach(function (watch) { watch.observer.disconnect(); delete watch.node.__acgWatched; }); watchers = [];
+    if (heroObserver) heroObserver.disconnect(); heroObserver = null;
+    all('.agnative-hero.acg-enhanced').forEach(function (hero) {
+      var native = qs('.agnative-hero__play', hero);
+      if (native) { native.classList.remove('acg-action', 'acg-details'); native.textContent = 'Смотреть'; hero.appendChild(native); }
+      remove(qs('.acg-hero-actions', hero)); remove(qs('.acg-meta-block', hero)); hero.classList.remove('acg-enhanced');
+    });
+    all('.acg-detail').forEach(function (header) {
+      var image = qs('.full-start__background', header);
+      if (image && header.__acgBackgroundParent) header.__acgBackgroundParent.insertBefore(image, header.__acgBackgroundParent.firstChild);
+      all('.acg-meta-block,.acg-detail-overview,.acg-action', header).forEach(remove); header.classList.remove('acg-detail');
+      delete header.__acgData;
+    });
+  }
+  function settings() {
+    if (!Lampa.SettingsApi || !Lampa.SettingsApi.addComponent) return;
+    Lampa.SettingsApi.addComponent({component:'lmp_apple_cinema_gold', name:'Apple Cinema Gold', icon:svg('play')});
+    function param(name, type, title, description, values, fallback, onChange) {
+      var config = {name:PREFIX + name, type:type, default:fallback}; if (values) config.values = values;
+      Lampa.SettingsApi.addParam({component:'lmp_apple_cinema_gold', param:config, field:{name:title, description:description}, onChange:onChange});
+    }
+    param('enabled', 'trigger', 'Apple Cinema Gold 1.6', 'Изменение оформления применяется после перезапуска Lampa.', null, 'true', function (v) {
+      set(PREFIX + 'enabled', String(v)); if (!enabled()) { cleanup(); restore(); } else { applyPreset(); ensureUpstream(); queueSync(); } visual();
+    });
+    param('topbar_scale', 'select', 'Размер верхней панели', 'Компактная панель с отдельными кнопками меню и профиля.', {'1':'Компактный, по макету','1.1':'На 10% крупнее','1.2':'На 20% крупнее'}, '1', function (v) { set(PREFIX + 'topbar_scale', String(v)); visual(); });
+    param('row_gap', 'select', 'Расстояние между каруселями', 'Вертикальное пространство между рядами фильмов.', {'2.4':'Умеренное','3.2':'Свободное, по макету','4':'Максимальное'}, '3.2', function (v) { set(PREFIX + 'row_gap', String(v)); visual(); });
+    param('trailer_preview', 'trigger', 'Фоновый трейлер в карточке', 'Без звука. Если встроенное воспроизведение недоступно, остаётся постер и кнопка трейлера.', null, 'true', function (v) { set(PREFIX + 'trailer_preview', String(v)); if (String(v) === 'false') stopTrailer('disabled'); else if (fullState && connected(fullState.header)) scheduleTrailer(fullState); });
+    param('restore', 'button', 'Вернуть прежние настройки', 'Отключить оформление и восстановить исходные параметры. Затем перезапусти Lampa.', null, '', function () { set(PREFIX + 'enabled','false'); cleanup(); restore(); visual(); notify('Настройки восстановлены. Перезапусти Lampa.'); });
+  }
   function ensureUpstream() {
-    // If the original theme is already installed, never load another copy.
-    if (window.__APPLETV_AGNATIVE_TOPNAV__) return;
-    if (document.querySelector('script[data-apple-cinema-upstream]')) return;
-    var script = document.createElement('script');
-    script.src = UPSTREAM;
-    script.async = true;
-    script.setAttribute('data-apple-cinema-upstream', 'true');
-    script.onerror = function () {
-      // Missing theme must not prevent standard Lampa from launching.
-      try { console.warn('[Apple Cinema Hero] Upstream theme not available'); }
-      catch (_) {}
-    };
-    (document.head || document.documentElement).appendChild(script);
+    if (window.__APPLETV_AGNATIVE_TOPNAV__ || qs('script[data-apple-cinema-upstream]')) return;
+    var script = document.createElement('script'); script.src = UPSTREAM; script.async = true;
+    script.setAttribute('data-apple-cinema-upstream', 'true'); script.onload = queueSync;
+    script.onerror = function () { diagnostics.lastError = 'Upstream unavailable'; }; (document.head || document.body).appendChild(script);
   }
-
-  function registerSettings() {
-    if (settingsReady) return;
-    if (!Lampa.SettingsApi || typeof Lampa.SettingsApi.addComponent !== 'function') return;
-    settingsReady = true;
-    try {
-      Lampa.SettingsApi.addComponent({
-        component: SETTINGS_COMPONENT,
-        name: 'Apple Cinema Gold',
-        icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="m10 9 5 3-5 3z"/></svg>'
-      });
-      Lampa.SettingsApi.addParam({
-        component: SETTINGS_COMPONENT,
-        param: {name: ENABLED, type: 'trigger', default: 'true'},
-        field: {
-          name: 'Большой кинематографичный баннер',
-          description: 'Оформление Apple TV на главной. Понадобится перезапуск Lampa.'
-        },
-        onChange: function (v) {
-          set(ENABLED, String(v));
-          if (enabled()) { applyPreset(); ensureUpstream(); }
-          else restorePreviousSettings();
-          updateVisual();
-        }
-      });
-      Lampa.SettingsApi.addParam({
-        component: SETTINGS_COMPONENT,
-        param: {
-          name: GOLD_MODE,
-          type: 'select',
-          values: {
-            noir: 'Тёмное золото (Apple Cinema Gold)',
-            classic: 'Оригинальное Gold Theme',
-            off: 'Без золотого оформления'
-          },
-          default: 'noir'
-        },
-        field: {
-          name: 'Золотая цветовая схема',
-          description: 'Тёмный графит с шампанью, оригинальная коричневая тема или без золота.'
-        },
-        onChange: function (v) {
-          set(GOLD_MODE, String(v));
-          updateVisual();
-        }
-      });
-      Lampa.SettingsApi.addParam({
-        component: SETTINGS_COMPONENT,
-        param: {
-          name: TOPBAR_SCALE,
-          type: 'select',
-          values: {
-            '2.25': '2,25×: по макету',
-            '1.5': '1,5×: компактная панель',
-            '1': '1×: исходный размер Apple TV',
-            '2': '2×: увеличенная панель',
-            '3': '3×: очень крупная панель'
-          },
-          default: '2.25'
-        },
-        field: {
-          name: 'Масштаб верхнего меню и иконок',
-          description: 'Увеличивает иконки, их кнопки и высоту верхней панели. Текст меню увеличен умеренно, чтобы помещаться на экране.'
-        },
-        onChange: function (v) {
-          set(TOPBAR_SCALE, String(v));
-          updateVisual();
-        }
-      });
-      Lampa.SettingsApi.addParam({
-        component: SETTINGS_COMPONENT,
-        param:{name:TRAILER_KEY,type:'trigger',default:'true'},
-        field:{name:'Фоновый трейлер в карточке',description:'Автозапуск без звука при наличии ролика. На слабой приставке можно отключить.'},
-        onChange:function(v){set(TRAILER_KEY,String(v));if(String(v)==='false')stopTrailerPreview();}
-      });
-      Lampa.SettingsApi.addParam({
-        component: SETTINGS_COMPONENT,
-        param: {name: STORAGE_PREFIX + 'restore', type: 'button'},
-        field: {
-          name: 'Вернуть прежние настройки темы',
-          description: 'Отключить надстройку и восстановить значения до установки. Перезапусти Lampa.'
-        },
-        onChange: function () {
-          set(ENABLED, 'false');
-          restorePreviousSettings();
-          stopTrailerPreview();
-          clearHeroAction();
-          updateVisual();
-          try { if (Lampa.Noty && Lampa.Noty.show) Lampa.Noty.show('Настройки восстановлены. Перезапусти Lampa.'); }
-          catch (_) {}
-        }
-      });
-    } catch (e) {
-      // Settings API layouts differ between Lampa builds. Styling remains optional.
-      try { console.warn('[Apple Cinema Hero] Cannot register settings:', e); }
-      catch (_) {}
-    }
-  }
-
   function boot() {
-    if (started || !window.Lampa || !Lampa.Storage) return;
-    started = true;
-    try {
-      // Existing 1.5x default becomes 2.25x in the approved layout.
-      if (get(STORAGE_PREFIX + 'v14_scale_migrated','false') !== 'true') {
-        if(String(get(TOPBAR_SCALE,'1.5'))==='1.5')set(TOPBAR_SCALE,'2.25');
-        set(STORAGE_PREFIX + 'v14_scale_migrated','true');
-      }
-      // Backward compatibility with earlier stored values.
-      if (get(SCALE_MIGRATED, 'false') !== 'true') {
-        if (String(get(TOPBAR_SCALE, '3')) === '3') set(TOPBAR_SCALE, '2.25');
-        set(SCALE_MIGRATED, 'true');
-      }
-      if (enabled() && get(INITIALIZED, 'false') !== 'true') applyPreset();
-      updateVisual();
-      if (enabled()) ensureUpstream();
-      registerSettings();
-      if (enabled()) beginNavigation();
-      if (enabled()) initTrailerPreview();
-      if (window.Lampa && Lampa.Listener && typeof Lampa.Listener.follow==='function') {
-        try{Lampa.Listener.follow('full',heroCardComplete);}catch(err){}
-      }
-      if (window.Lampa && Lampa.Listener && typeof Lampa.Listener.follow==='function') {
-        try { Lampa.Listener.follow('activity',queueNavigation); }catch(err){}
-      }
-    } catch (e) {
-      try { console.warn('[Apple Cinema Hero] Safe mode:', e); }
-      catch (_) {}
+    if (ready || !window.Lampa || !Lampa.Storage) return;
+    ready = true;
+    if (get(PREFIX + 'v16_migrated', 'false') !== 'true') {
+      set(PREFIX + 'topbar_scale', '1'); set(PREFIX + 'row_gap', '3.2');
+      if (enabled()) applyPreset();
+      set(PREFIX + 'v16_migrated', 'true');
     }
-  }
-
-  // Only proceed when Lampa initializes. The poll ends automatically.
-  if (window.Lampa && Lampa.Listener && typeof Lampa.Listener.follow === 'function') {
-    try {
-      Lampa.Listener.follow('app', function (event) {
-        if (event && event.type === 'ready') boot();
+    visual();
+    try { settings(); } catch (err) { diagnostics.lastError = String(err.message || err); }
+    if (enabled()) { ensureUpstream(); sync(); }
+    if (Lampa.Listener && Lampa.Listener.follow) {
+      Lampa.Listener.follow('full', function (event) {
+        if (!enabled() || !event) return;
+        if (/^(complite|complete)$/.test(String(event.type))) {
+          try { enhanceDetail(event); completePending(event); queueSync(); }
+          catch (err) { diagnostics.lastError = String(err.message || err); }
+        }
+        else if (event.type === 'start' || event.type === 'destroy') stopTrailer('navigation');
       });
-    } catch (_) {}
+      Lampa.Listener.follow('activity', function () {
+        queueSync();
+        if (fullState && (!connected(fullState.header) || !activePage().contains(fullState.header))) { stopTrailer('navigation'); fullState = null; }
+      });
+      Lampa.Listener.follow('player', function () { stopTrailer('player'); });
+      Lampa.Listener.follow('resize_end', visual);
+      Lampa.Listener.follow('state:changed', function (event) {
+        if (!enabled() || !event || event.target !== 'favorite') return;
+        if (heroNode && connected(heroNode)) updateFavorite(qs('.acg-favorite', heroNode), currentMovie(heroNode));
+        if (fullState && connected(fullState.header)) updateFavorite(qs('.acg-favorite', fullState.header), fullState.data.movie);
+      });
+    }
+    if (Lampa.Player && Lampa.Player.listener && Lampa.Player.listener.follow) {
+      ['create', 'start', 'external'].forEach(function (event) {
+        Lampa.Player.listener.follow(event, function () { stopTrailer('player'); });
+      });
+    }
+    document.addEventListener('visibilitychange', function () { if (document.hidden) stopTrailer('hidden'); });
+    var attempts = 0;
+    startupTimer = setInterval(function () { if (++attempts >= 24 || !enabled()) { clearInterval(startupTimer); startupTimer = null; } else queueSync(); }, 500);
   }
+  window.AppleCinemaGold = {version:VERSION, diagnostics:diagnostics};
+  if (window.Lampa && Lampa.Listener && Lampa.Listener.follow) Lampa.Listener.follow('app', function (event) { if (event && event.type === 'ready') boot(); });
   if (window.appready) boot();
   else {
-    var attempts = 0;
-    var timer = setInterval(function () {
-      attempts++;
-      if (window.appready && window.Lampa && Lampa.Storage) {
-        clearInterval(timer);
-        boot();
-      } else if (attempts >= 100) {
-        clearInterval(timer);
-      }
+    var attempts = 0, bootTimer = setInterval(function () {
+      if (window.appready && window.Lampa) { clearInterval(bootTimer); boot(); }
+      else if (++attempts >= 100) clearInterval(bootTimer);
     }, 200);
   }
 })();

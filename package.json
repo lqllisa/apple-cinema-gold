@@ -1,0 +1,15 @@
+{
+  "name": "apple-cinema-gold-checks",
+  "version": "1.6.0",
+  "private": true,
+  "scripts": {
+    "build": "python3 build.py",
+    "test": "node --check apple_cinema_gold.js && node --test test/plugin.test.cjs"
+  },
+  "devDependencies": {
+    "jsdom": "31.0.0"
+  },
+  "engines": {
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
+  }
+}
