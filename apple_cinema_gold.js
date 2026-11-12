@@ -1,6 +1,6 @@
 /*
  * Apple Cinema Gold for Lampa - combined Apple Cinema Hero + Gold Theme aesthetics.
- * Version: 1.5.0 (2026-11-12)
+ * Version: 1.5.1 (2026-11-12)
  * Purpose: Apple TV navigation, immersive cinematic hero and integrated gold palettes.
  * The AppleTV AgNative NG upstream is loaded separately and not embedded.
  * Gold palettes were reimplemented from the publicly documented BazZziliuS Gold Theme aesthetic.
@@ -179,6 +179,15 @@
     'body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero + .items-line {',
     '  position: relative !important; z-index: 11 !important;',
     '  margin-top: -1em !important;',
+    '}',
+    // Page carousel row spacing: Lampa 3em * 1.2; AgNative .12em/.32em * 1.2.
+    // Scope to activity pages so player overlays keep their own spacing.
+    'body.appletv-agnative-topnav.lmp-cinema-hero .activity .items-line {',
+    '  padding-bottom: 3.6em !important;',
+    '}',
+    'body.appletv-agnative-topnav.lmp-cinema-hero .activity .items-line--type-default {',
+    '  padding-bottom: .144em !important;',
+    '  margin-bottom: .384em !important;',
     '}',
     '@media (max-width: 1000px) {',
     '  body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero { height: 67vh !important; min-height: 325px !important; }',
