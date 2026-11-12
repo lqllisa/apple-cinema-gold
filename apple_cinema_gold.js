@@ -1,6 +1,6 @@
 /*
  * Apple Cinema Gold for Lampa - combined Apple Cinema Hero + Gold Theme aesthetics.
- * Version: 1.2.0 (2026-11-12)
+ * Version: 1.3.0 (2026-11-12)
  * Purpose: Apple TV navigation, immersive cinematic hero and integrated gold palettes.
  * The AppleTV AgNative NG upstream is loaded separately and not embedded.
  * Gold palettes were reimplemented from the publicly documented BazZziliuS Gold Theme aesthetic.
@@ -25,6 +25,7 @@
   var GOLD_MODE = 'lmp_apple_cinema_gold_mode';
   var TOPBAR_SCALE = 'lmp_apple_cinema_topbar_scale';
   var STORAGE_PREFIX = 'lmp_apple_cinema_';
+  var SCALE_MIGRATED = STORAGE_PREFIX + 'v13_scale_migrated';
   var ENABLED = STORAGE_PREFIX + 'enabled';
   var INITIALIZED = STORAGE_PREFIX + 'preset_initialized';
   var SNAPSHOT = STORAGE_PREFIX + 'original_values';
@@ -32,7 +33,7 @@
   var started = false;
   var settingsReady = false;
   var GOLD_CLASSES = ['lmp-cinema-gold-classic', 'lmp-cinema-gold-noir'];
-  var TOPBAR_CLASSES = ['lmp-cinema-topbar-2x', 'lmp-cinema-topbar-3x'];
+  var TOPBAR_CLASSES = ['lmp-cinema-topbar-1.5x', 'lmp-cinema-topbar-2x', 'lmp-cinema-topbar-3x'];
 
   // Preset keys match the AppleTV AgNative NG v0.4.1 source. These belong to upstream, not a new API.
   var PRESET = {
@@ -68,8 +69,8 @@
   }
 
   function topbarScale() {
-    var v = String(get(TOPBAR_SCALE, '3'));
-    return v === '1' || v === '2' || v === '3' ? v : '3';
+    var v = String(get(TOPBAR_SCALE, '1.5'));
+    return v === '1' || v === '1.5' || v === '2' || v === '3' ? v : '1.5';
   }
 
   function snapshotOriginalSettings() {
@@ -201,10 +202,6 @@
     'body.lmp-cinema-gold-classic .head__action.focus, body.lmp-cinema-gold-classic .head__action.hover,',
     'body.lmp-cinema-gold-classic .player-panel .button.focus, body.lmp-cinema-gold-classic .search-source.active {',
     ' background:linear-gradient(100deg,#fef4de 1%,#edcfab 100%) !important; color:#17130d !important; }',
-    'body.lmp-cinema-gold-classic .settings__content, body.lmp-cinema-gold-classic .settings-input__content,',
-    'body.lmp-cinema-gold-classic .selectbox__content, body.lmp-cinema-gold-classic .modal__content {',
-    ' background:linear-gradient(135deg,#322e25 1%,#0a0806 100%) !important; }',
-    'body.lmp-cinema-gold-classic .extensions { background:#201911 !important; }',
     'body.lmp-cinema-gold-classic .extensions__item, body.lmp-cinema-gold-classic .extensions__block-add { background-color:#423a32 !important; }',
     'body.lmp-cinema-gold-classic .iptv-channel { background-color:#624e3f !important; }',
     'body.lmp-cinema-gold-classic .torrent-file.focus, body.lmp-cinema-gold-classic .torrent-serial.focus { background:rgba(223,217,206,.35) !important; }',
@@ -227,10 +224,6 @@
     'body.lmp-cinema-gold-noir .head__action.focus, body.lmp-cinema-gold-noir .head__action.hover,',
     'body.lmp-cinema-gold-noir .player-panel .button.focus, body.lmp-cinema-gold-noir .search-source.active {',
     ' background:linear-gradient(105deg,#f4e5c7 0%,#d3ac74 100%) !important; color:#18140f !important; }',
-    'body.lmp-cinema-gold-noir .settings__content, body.lmp-cinema-gold-noir .settings-input__content,',
-    'body.lmp-cinema-gold-noir .selectbox__content, body.lmp-cinema-gold-noir .modal__content {',
-    ' background:linear-gradient(140deg,#26221d,#0c0d10 85%) !important; }',
-    'body.lmp-cinema-gold-noir .extensions { background:#141414 !important; }',
     'body.lmp-cinema-gold-noir .extensions__item, body.lmp-cinema-gold-noir .extensions__block-add { background:#282620 !important; }',
     'body.lmp-cinema-gold-noir .torrent-file.focus, body.lmp-cinema-gold-noir .torrent-serial.focus { background:rgba(212,171,111,.20) !important; }',
     'body.lmp-cinema-gold-noir .torrent-item__size, body.lmp-cinema-gold-noir .torrent-item__exe, body.lmp-cinema-gold-noir .torrent-serial__size { background:#e4cfaa; color:#18140f; }',
@@ -289,14 +282,28 @@
     ].join('\n');
   }
 
-  var TOPBAR_CSS = magnifiedTopbarCSS(2) + '\n' + magnifiedTopbarCSS(3);
+  var TOPBAR_CSS = magnifiedTopbarCSS(1.5) + '\n' + magnifiedTopbarCSS(2) + '\n' + magnifiedTopbarCSS(3);
   var TOPBAR_STYLE_ID = 'lmp-apple-cinema-topbar-style';
+  var DETAIL_STYLE_ID = 'lmp-apple-cinema-design-13';
   function injectTopbarStyle() {
     if (document.getElementById(TOPBAR_STYLE_ID)) return;
     var node = document.createElement('style');
     node.id = TOPBAR_STYLE_ID;
     node.type = 'text/css';
     node.textContent = TOPBAR_CSS;
+    (document.head || document.documentElement).appendChild(node);
+  }
+
+
+  // Styles for elegant controls, 25% larger carousel covers and Gold typography.
+  // Unlike earlier versions, no settings/modal panel background or blur is overridden.
+  var DETAIL_CSS = "\n/* Apple Cinema Gold 1.3: color and typography only inside menus and settings.\n   Preserve existing panel sizes, positioning, backgrounds, blur and opacity. */\nbody.lmp-cinema-hero.lmp-cinema-gold-noir {\n  --acg-text:#f2e8d9;--acg-metal:#d6b780;--acg-dim:#c2ab88;\n  --acg-glow:rgba(216,177,109,.23);--acg-cream:#f3e8d0;\n  --acg-primary:linear-gradient(112deg,#f9eed8 0%,#d7b482 100%);\n}\nbody.lmp-cinema-hero.lmp-cinema-gold-classic {\n  --acg-text:#f2e5d4;--acg-metal:#e9cca5;--acg-dim:#d8bb98;\n  --acg-glow:rgba(250,222,173,.22);--acg-cream:#fff6e7;\n  --acg-primary:linear-gradient(112deg,#fff8e9 0%,#eac9a0 100%);\n}\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .menu__item,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .settings-folder,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .settings-param,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .settings__title,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .menu__title {\n  font-family:system-ui,Roboto,Arial,sans-serif !important;\n  font-weight:500 !important;\n  letter-spacing:.018em !important;\n  color:var(--acg-text) !important;\n  text-shadow:0 1px 5px rgba(0,0,0,.34);\n  transition:color .18s ease,background .18s ease,box-shadow .18s ease !important;\n}\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .settings__title,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .menu__title {\n  font-weight:600 !important;letter-spacing:.035em !important;\n  color:var(--acg-metal) !important;\n}\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .settings-folder__name,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .settings-param__name,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .menu__item-title {\n  font-weight:550 !important;letter-spacing:.02em !important;\n}\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .settings-param__descr,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .settings-param__description {\n  color:var(--acg-dim) !important;letter-spacing:.008em !important;\n}\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .menu__item.focus,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .menu__item.hover,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .menu__item.traverse,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .settings-folder.focus,\nbody.lmp-cinema-hero[class*=\"lmp-cinema-gold-\"] .settings-param.focus {\n  color:#231b13 !important;text-shadow:0 1px 0 rgba(255,255,255,.25) !important;\n  box-shadow:inset 0 1px 0 rgba(255,255,255,.38),0 5px 22px var(--acg-glow) !important;\n}\n/* The hero remains one real action: \"Подробнее\"; do not draw a fake \"Смотреть\" hit target. */\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.selector::after {\n  content:\"Подробнее\" !important;\n  font-family:system-ui,Roboto,Arial,sans-serif !important;\n  font-size:1.06rem !important;font-weight:620 !important;letter-spacing:.048em !important;\n  color:#241c13 !important;text-shadow:0 1px 0 rgba(255,255,255,.4) !important;\n  background:linear-gradient(115deg,rgba(255,252,244,.94),rgba(230,204,166,.81)) !important;\n  border:1px solid rgba(255,250,237,.66) !important;border-radius:.85em !important;\n  backdrop-filter:blur(16px) saturate(135%) !important;\n  -webkit-backdrop-filter:blur(16px) saturate(135%) !important;\n  box-shadow:inset 0 1px 0 rgba(255,255,255,.62),0 12px 32px rgba(0,0,0,.27),0 0 24px rgba(201,164,102,.10) !important;\n  transition:background .2s ease,box-shadow .2s ease !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.selector.focus::after,\nbody.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.selector.hover::after {\n  background:linear-gradient(115deg,#fffdf8,#e9c99b) !important;\n  box-shadow:inset 0 1px 0 #fff,0 0 0 2px rgba(247,225,190,.55),0 14px 36px rgba(0,0,0,.33) !important;\n}\n/* Film details: existing working watch/detail buttons, no event handler changes. */\nbody.lmp-cinema-hero .full-start__buttons .full-start__button,\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button,\nbody.lmp-cinema-hero .full-start-new__buttons .full-start-new__button,\nbody.lmp-cinema-hero .buttons--container .full-start__button {\n  font-family:system-ui,Roboto,Arial,sans-serif !important;\n  font-weight:600 !important;letter-spacing:.03em !important;\n  color:#f6e9d3 !important;text-shadow:0 1px 5px rgba(0,0,0,.35) !important;\n  background:linear-gradient(110deg,rgba(42,36,33,.56),rgba(101,79,54,.37)) !important;\n  border:1px solid rgba(238,206,159,.38) !important;\n  border-radius:.78em !important;\n  backdrop-filter:blur(13px) saturate(125%) !important;\n  -webkit-backdrop-filter:blur(13px) saturate(125%) !important;\n  box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 9px 24px rgba(0,0,0,.24) !important;\n  transition:color .18s ease,background .18s ease,box-shadow .18s ease !important;\n}\nbody.lmp-cinema-hero .full-start__buttons .full-start__button.view--online,\nbody.lmp-cinema-hero .full-start__buttons .full-start__button.view--torrent,\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button.view--online,\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button.view--torrent,\nbody.lmp-cinema-hero .buttons--container .full-start__button.view--online {\n  background:linear-gradient(112deg,rgba(253,242,222,.92),rgba(213,175,123,.84)) !important;\n  color:#201811 !important;text-shadow:0 1px 0 rgba(255,255,255,.25) !important;\n  border-color:rgba(255,249,227,.72) !important;\n}\nbody.lmp-cinema-hero .full-start__buttons .full-start__button.focus,\nbody.lmp-cinema-hero .full-start__buttons .full-start__button.hover,\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button.focus,\nbody.lmp-cinema-hero .full-start-new__buttons .full-start__button.hover,\nbody.lmp-cinema-hero .full-start-new__buttons .full-start-new__button.focus,\nbody.lmp-cinema-hero .buttons--container .full-start__button.focus {\n  background:linear-gradient(108deg,#fff7e9,#e6c28e) !important;color:#1b1510 !important;\n  text-shadow:none !important;border-color:rgba(255,248,229,.92) !important;\n  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 0 0 2px rgba(240,209,160,.50),0 12px 28px rgba(0,0,0,.34) !important;\n}\n/* Enlarge actual carousel card widths by 25%, preserving layout flow and focus.\n   Exclude compact service/genre cards and grids. Upstream default width: 17.6em. */\nbody.appletv-agnative-topnav.lmp-cinema-hero:not([data-agnative-backdrop=\"off\"]) .items-line .card:not(.card--button-compact):not(.card--genre-compact):not(.streaming-card--button-compact) {\n  width:22em !important;flex:0 0 auto !important;\n}\nbody.appletv-agnative-topnav.lmp-cinema-hero[data-agnative-card-size=\"xs\"]:not([data-agnative-backdrop=\"off\"]) .items-line .card:not(.card--button-compact):not(.card--genre-compact):not(.streaming-card--button-compact) {width:17.5em !important;}\nbody.appletv-agnative-topnav.lmp-cinema-hero[data-agnative-card-size=\"sm\"]:not([data-agnative-backdrop=\"off\"]) .items-line .card:not(.card--button-compact):not(.card--genre-compact):not(.streaming-card--button-compact) {width:19.75em !important;}\nbody.appletv-agnative-topnav.lmp-cinema-hero[data-agnative-card-size=\"md\"]:not([data-agnative-backdrop=\"off\"]) .items-line .card:not(.card--button-compact):not(.card--genre-compact):not(.streaming-card--button-compact) {width:22em !important;}\nbody.appletv-agnative-topnav.lmp-cinema-hero[data-agnative-card-size=\"lg\"]:not([data-agnative-backdrop=\"off\"]) .items-line .card:not(.card--button-compact):not(.card--genre-compact):not(.streaming-card--button-compact) {width:24.25em !important;}\nbody.appletv-agnative-topnav.lmp-cinema-hero[data-agnative-card-size=\"xl\"]:not([data-agnative-backdrop=\"off\"]) .items-line .card:not(.card--button-compact):not(.card--genre-compact):not(.streaming-card--button-compact) {width:26.5em !important;}\n@media(prefers-reduced-motion:reduce){\n  body.lmp-cinema-hero .full-start__button,\n  body.appletv-agnative-topnav.lmp-cinema-hero .agnative-hero__play.selector::after {transition:none !important;}\n}";
+  function injectDetailStyle() {
+    if (document.getElementById(DETAIL_STYLE_ID)) return;
+    var node = document.createElement('style');
+    node.id = DETAIL_STYLE_ID;
+    node.type = 'text/css';
+    node.textContent = DETAIL_CSS;
     (document.head || document.documentElement).appendChild(node);
   }
 
@@ -334,6 +341,7 @@
         injectGoldStyle();
         document.body.classList.add('lmp-cinema-gold-' + mode);
       }
+      injectDetailStyle();
     } else {
       document.body.classList.remove('lmp-cinema-hero');
     }
@@ -406,11 +414,12 @@
           name: TOPBAR_SCALE,
           type: 'select',
           values: {
-            '3': '3×: крупная верхняя панель (по умолчанию)',
-            '2': '2×: увеличенная верхняя панель',
-            '1': '1×: исходный размер Apple TV'
+            '1.5': '1,5×: компактная панель (новый размер)',
+            '1': '1×: исходный размер Apple TV',
+            '2': '2×: увеличенная панель',
+            '3': '3×: очень крупная панель'
           },
-          default: '3'
+          default: '1.5'
         },
         field: {
           name: 'Масштаб верхнего меню и иконок',
@@ -447,6 +456,11 @@
     if (started || !window.Lampa || !Lampa.Storage) return;
     started = true;
     try {
+      // Upgrade the previous 3x default to exactly half (1.5x) once.
+      if (get(SCALE_MIGRATED, 'false') !== 'true') {
+        if (String(get(TOPBAR_SCALE, '3')) === '3') set(TOPBAR_SCALE, '1.5');
+        set(SCALE_MIGRATED, 'true');
+      }
       if (enabled() && get(INITIALIZED, 'false') !== 'true') applyPreset();
       updateVisual();
       if (enabled()) ensureUpstream();
