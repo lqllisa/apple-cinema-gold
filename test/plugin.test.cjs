@@ -37,9 +37,16 @@ function fixture(t, options = {}) {
       if (target) fn.call(target,event);
     }));return this;
   },trigger:enterName=>node.dispatchEvent(new w.CustomEvent(enterName,{bubbles:true,cancelable:true})),data:key=>node['data_'+key]});
-  w.appready = true; w.__APPLETV_AGNATIVE_TOPNAV__ = true; w.__AGNATIVE_HERO_CONTROLLER__ = true;
+  function stored(key, fallback) {
+    let value=key in storage ? storage[key] : fallback;
+    if (value==='true' || value==='false') return value==='true';
+    if (typeof value==='string' && /^[\[{]/.test(value)) {try {return JSON.parse(value);} catch (_) {}}
+    if (typeof value==='string' && /^\d+$/.test(value)) return parseInt(value,10);
+    return value;
+  }
+  w.appready = options.appready!==false; w.__APPLETV_AGNATIVE_TOPNAV__ = options.upstream!==false; w.__AGNATIVE_HERO_CONTROLLER__ = true;
   w.Lampa = {
-    Storage:{get:(key,fallback)=>key in storage ? storage[key] : fallback,set:(key,value)=>{storage[key]=value;}},
+    Storage:{get:stored,set:(key,value)=>{storage[key]=value;}},
     SettingsApi:{addComponent:()=>{},addParam:config=>{settings[config.param.name]=config;}},
     Listener:{follow:(name,fn)=>(handlers[name]||(handlers[name]=[])).push(fn)},
     Player:{listener:{follow:(name,fn)=>(playerHandlers[name]||(playerHandlers[name]=[])).push(fn)}},
@@ -95,7 +102,7 @@ function fixture(t, options = {}) {
     // Lampa binds its Watch action AFTER sending the completion event.
     q('.button--play').addEventListener('hover:enter',()=>{state.watch++;});
   }
-  home(false);w.eval(script);
+  home(false);if(options.beforeBoot) options.beforeBoot(w);w.eval(script);
   return {w,d,q,state,storage,settings,movie,enter,emit,playerEmit,home,full,mountHero,controls,selected:()=>selected};
 }
 
@@ -360,4 +367,63 @@ test('a stalled trailer immediately reveals the poster, then resumes or times ou
   send('playing');assert(e.q('.acg-trailer-playing'));
   send('buffering');await wait(380);
   assert.equal(e.q('.acg-trailer-preview'),null);assert.equal(e.w.AppleCinemaGold.diagnostics.trailer,'playback-timeout');
+});
+
+test('native boolean migration flags do not reset settings on every startup', async t=>{
+  const e=fixture(t,{storage:{lmp_apple_cinema_v18_migrated:true,lmp_apple_cinema_trailer_preview:false,lmp_apple_cinema_topbar_scale:'1.1'}});
+  e.full();await wait(65);
+  assert.equal(e.storage.lmp_apple_cinema_trailer_preview,false);
+  assert.equal(e.storage.lmp_apple_cinema_topbar_scale,'1.1');
+  assert.equal(e.q('.acg-trailer-preview'),null);
+});
+
+test('already parsed original settings remain intact across startup and restoration', t=>{
+  const original={background:false,background_type:'poster',appletv_agnative_hero_enabled:false};
+  const e=fixture(t,{storage:{lmp_apple_cinema_original_values:original}});
+  e.settings.lmp_apple_cinema_restore.onChange();
+  for (const key of Object.keys(original)) assert.equal(e.storage[key],original[key]);
+});
+
+test('dependency is pinned and a network failure retries the same revision once', t=>{
+  const e=fixture(t,{upstream:false});
+  const first=e.q('script[data-apple-cinema-upstream]');
+  assert.match(first.src,/cdn\.jsdelivr\.net\/gh\/Llowmikee\/AppleTVAGNativeNG@b68d7840996da040ef4fe9d8f5e53e8ed4f759a7\/appletv_agnative\.js$/);
+  assert.equal(first.crossOrigin,'anonymous');assert.match(first.integrity,/^sha384-/);
+  const lateFailure=first.onerror;first.onerror();
+  const second=e.q('script[data-apple-cinema-upstream]');
+  assert(!first.isConnected);assert.notEqual(first,second);
+  assert.match(second.src,/fastly\.jsdelivr\.net/);assert.equal(second.integrity,first.integrity);
+  lateFailure();assert.equal(e.d.querySelectorAll('script[data-apple-cinema-upstream]').length,1);
+  e.w.__APPLETV_AGNATIVE_TOPNAV__=true;second.onload();
+  assert.equal(e.w.AppleCinemaGold.diagnostics.upstream,'ready-0.4.1');
+});
+
+test('dependency load attempts stop after both sources fail', t=>{
+  const e=fixture(t,{upstream:false});
+  e.q('script[data-apple-cinema-upstream]').onerror();
+  e.q('script[data-apple-cinema-upstream]').onerror();
+  assert.equal(e.q('script[data-apple-cinema-upstream]'),null);
+  assert.equal(e.w.AppleCinemaGold.diagnostics.upstream,'unavailable');
+  assert.equal(e.state.notices.length,1);assert.equal(e.w.AppleCinemaGold.diagnostics.startup,'ready');
+});
+
+test('disabled overlay cancels a pending dependency request', t=>{
+  const e=fixture(t,{upstream:false});
+  e.settings.lmp_apple_cinema_enabled.onChange('false');
+  assert.equal(e.q('script[data-apple-cinema-upstream]'),null);
+});
+
+test('the ready event starts the overlay once with native boolean settings', async t=>{
+  const e=fixture(t,{appready:false});
+  assert.equal(e.w.AppleCinemaGold.diagnostics.startup,undefined);
+  e.w.appready=true;e.emit('app',{type:'ready'});e.emit('app',{type:'ready'});await wait(20);
+  assert.equal(e.w.AppleCinemaGold.diagnostics.startup,'ready');
+  assert.equal(e.d.querySelectorAll('.acg-system-action').length,3);
+  assert.equal(e.d.querySelectorAll('#lmp-apple-cinema-v18-style').length,1);
+});
+
+test('malformed original settings do not throw during startup', t=>{
+  const e=fixture(t,{storage:{lmp_apple_cinema_original_values:'true'}});
+  assert.equal(e.w.AppleCinemaGold.diagnostics.startup,'ready');
+  assert.equal(e.w.AppleCinemaGold.diagnostics.lastError,undefined);
 });

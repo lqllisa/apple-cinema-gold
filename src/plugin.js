@@ -1,5 +1,5 @@
 /*
- * Apple Cinema Gold 1.8.0 (2026-11-12)
+ * Apple Cinema Gold 1.8.1 (2026-11-14)
  * Single-file Lampa overlay. Build with python3 build.py.
  * AppleTV AgNative NG remains an external dependency; no upstream code is bundled.
  */
@@ -8,16 +8,20 @@
   if (window.__LMP_APPLE_CINEMA_GOLD_V12__) return;
   window.__LMP_APPLE_CINEMA_GOLD_V12__ = true;
 
-  var VERSION = '1.8.0';
+  var VERSION = '1.8.1';
   var PREFIX = 'lmp_apple_cinema_';
   var STYLE_ID = 'lmp-apple-cinema-v18-style';
-  var UPSTREAM = 'https://llowmikee.github.io/AppleTVAGNativeNG/appletv_agnative.js';
+  // The approved layout was verified against AgNative 0.4.1. Do not follow
+  // changes to the author's live Pages file implicitly on every TV restart.
+  var UPSTREAM_PATH = '/gh/Llowmikee/AppleTVAGNativeNG@b68d7840996da040ef4fe9d8f5e53e8ed4f759a7/appletv_agnative.js';
+  var UPSTREAM_URLS = ['https://cdn.jsdelivr.net' + UPSTREAM_PATH, 'https://fastly.jsdelivr.net' + UPSTREAM_PATH];
+  var UPSTREAM_INTEGRITY = 'sha384-Q0c9mcezE6gwRwsNN+WJq5DBAe5WtTrQBc1OfHyAOBV+bpULBKwFJl+dLreBuAxZ';
   var TRAILER_ORIGIN = 'https://lqllisa.github.io';
   var TRAILER_PAGE = TRAILER_ORIGIN + '/apple-cinema-gold/trailer.html';
   var CSS = __ACG_STYLES__;
   var ready = false, syncTimer = null, startupTimer = null, pending = null;
   var heroNode = null, controllerHero = null, heroObserver = null, fullState = null, watchers = [];
-  var dockController = null;
+  var dockController = null, upstreamRequest = null;
   var player = null, preview = null, previewTimer = null, previewDeadline = null, epoch = 0;
   var videoCache = {}, cacheOrder = [];
   var diagnostics = {version: VERSION, trailer: 'idle'};
@@ -45,9 +49,15 @@
   function connected(node) { return !!(node && document.documentElement.contains(node)); }
   function remove(node) { if (node && node.parentNode) node.parentNode.removeChild(node); }
   function notify(message) { try { Lampa.Noty.show(message); } catch (_) {} }
+  function originalValues() {
+    var saved = get(PREFIX + 'original_values', {});
+    if (typeof saved === 'string') { try { saved = JSON.parse(saved); } catch (_) { saved = {}; } }
+    var copy = {};
+    if (saved && typeof saved === 'object' && !Array.isArray(saved)) Object.keys(saved).forEach(function (key) { copy[key] = saved[key]; });
+    return copy;
+  }
   function remember(key) {
-    var saved = {};
-    try { saved = JSON.parse(get(PREFIX + 'original_values', '{}')) || {}; } catch (_) {}
+    var saved = originalValues();
     if (!Object.prototype.hasOwnProperty.call(saved, key)) {
       saved[key] = get(key, null);
       set(PREFIX + 'original_values', JSON.stringify(saved));
@@ -59,8 +69,7 @@
   }
   function applyPreset() { Object.keys(preset).forEach(function (key) { change(key, preset[key]); }); }
   function restore() {
-    var saved = {};
-    try { saved = JSON.parse(get(PREFIX + 'original_values', '{}')) || {}; } catch (_) {}
+    var saved = originalValues();
     Object.keys(saved).forEach(function (key) { set(key, saved[key] === null ? '' : saved[key]); });
   }
   function visual() {
@@ -620,6 +629,7 @@
   }
   function cleanup() {
     stopTrailer('disabled'); pending = null; controllerHero = null;
+    cancelUpstream();
     if (syncTimer) clearTimeout(syncTimer); syncTimer = null;
     if (startupTimer) clearInterval(startupTimer); startupTimer = null;
     watchers.forEach(function (watch) { watch.observer.disconnect(); delete watch.node.__acgWatched; }); watchers = [];
@@ -648,7 +658,7 @@
       var config = {name:PREFIX + name, type:type, default:fallback}; if (values) config.values = values;
       Lampa.SettingsApi.addParam({component:'lmp_apple_cinema_gold', param:config, field:{name:title, description:description}, onChange:onChange});
     }
-    param('enabled', 'trigger', 'Apple Cinema Gold 1.8', 'Стекло, шампань и кинематографичная главная страница.', null, 'true', function (v) {
+    param('enabled', 'trigger', 'Apple Cinema Gold 1.8.1', 'Стекло, шампань и кинематографичная главная страница.', null, 'true', function (v) {
       set(PREFIX + 'enabled', String(v)); if (!enabled()) { cleanup(); restore(); } else { applyPreset(); ensureUpstream(); queueSync(); } visual();
     });
     param('topbar_scale', 'select', 'Размер верхней панели', 'Категории по центру, системные кнопки отдельно.', {'1':'Компактный','1.1':'На 10% крупнее','1.2':'На 20% крупнее, по макету'}, '1.2', function (v) { set(PREFIX + 'topbar_scale', String(v)); visual(); });
@@ -657,17 +667,50 @@
     param('simple_glass', 'trigger', 'Упростить стеклянные эффекты', 'Уменьшить нагрузку на слабый телевизор, сохранив цветовую гамму.', null, 'false', function (v) { set(PREFIX + 'simple_glass', String(v)); visual(); });
     param('restore', 'button', 'Вернуть прежние настройки', 'Отключить оформление и восстановить исходные параметры. Затем перезапусти Lampa.', null, '', function () { set(PREFIX + 'enabled','false'); cleanup(); restore(); visual(); notify('Настройки восстановлены. Перезапусти Lampa.'); });
   }
+  function cancelUpstream() {
+    if (!upstreamRequest) return;
+    clearTimeout(upstreamRequest.timer);
+    upstreamRequest.node.onload = upstreamRequest.node.onerror = null;
+    remove(upstreamRequest.node); upstreamRequest = null;
+  }
   function ensureUpstream() {
-    if (window.__APPLETV_AGNATIVE_TOPNAV__ || qs('script[data-apple-cinema-upstream]')) return;
-    var script = document.createElement('script'); script.src = UPSTREAM; script.async = true;
-    script.setAttribute('data-apple-cinema-upstream', 'true'); script.onload = queueSync;
-    script.onerror = function () { diagnostics.lastError = 'Upstream unavailable'; }; (document.head || document.body).appendChild(script);
+    if (window.__APPLETV_AGNATIVE_TOPNAV__) { diagnostics.upstream = 'already-loaded'; return; }
+    if (upstreamRequest || qs('script[data-apple-cinema-upstream]')) return;
+    function load(index) {
+      if (!enabled()) return;
+      if (window.__APPLETV_AGNATIVE_TOPNAV__) { diagnostics.upstream = 'already-loaded'; return; }
+      if (index >= UPSTREAM_URLS.length) {
+        diagnostics.upstream = 'unavailable'; diagnostics.lastError = 'AgNative 0.4.1 could not be loaded';
+        notify('Apple Cinema Gold: не удалось загрузить тему. Проверь подключение и перезапусти Lampa.');
+        return;
+      }
+      var script = document.createElement('script');
+      var request = {node:script, timer:null}; upstreamRequest = request;
+      diagnostics.upstream = 'loading-0.4.1';
+      script.async = true; script.crossOrigin = 'anonymous';
+      script.integrity = UPSTREAM_INTEGRITY;
+      script.setAttribute('data-apple-cinema-upstream', '0.4.1');
+      script.onload = function () {
+        if (upstreamRequest !== request) return;
+        clearTimeout(request.timer); script.onload = script.onerror = null; upstreamRequest = null;
+        diagnostics.upstream = window.__APPLETV_AGNATIVE_TOPNAV__ ? 'ready-0.4.1' : 'initialization-error';
+        queueSync();
+      };
+      function failed() {
+        if (upstreamRequest !== request) return;
+        cancelUpstream(); load(index + 1);
+      }
+      script.onerror = failed;
+      request.timer = setTimeout(failed, 15000);
+      script.src = UPSTREAM_URLS[index]; (document.head || document.body).appendChild(script);
+    }
+    load(0);
   }
   function boot() {
-    if (ready || !window.Lampa || !Lampa.Storage) return;
+    if (ready || !document.body || !window.Lampa || !Lampa.Storage || typeof Lampa.Storage.get !== 'function' || typeof Lampa.Storage.set !== 'function') return;
     ready = true;
-    if (get(PREFIX + 'v18_migrated', 'false') !== 'true') {
-      if (get(PREFIX + 'v17_migrated', 'false') !== 'true') set(PREFIX + 'topbar_scale', '1.2');
+    if (String(get(PREFIX + 'v18_migrated', false)) !== 'true') {
+      if (String(get(PREFIX + 'v17_migrated', false)) !== 'true') set(PREFIX + 'topbar_scale', '1.2');
       if (['2.4', '3.2', '4'].indexOf(String(get(PREFIX + 'row_gap', ''))) < 0) set(PREFIX + 'row_gap', '3.2');
       set(PREFIX + 'trailer_preview', 'true');
       if (enabled()) applyPreset();
@@ -707,13 +750,22 @@
     });
     var attempts = 0;
     startupTimer = setInterval(function () { if (++attempts >= 24 || !enabled()) { clearInterval(startupTimer); startupTimer = null; } else queueSync(); }, 500);
+    diagnostics.startup = 'ready';
+  }
+  function safeBoot() {
+    try { boot(); }
+    catch (err) {
+      diagnostics.startup = 'error'; diagnostics.lastError = String(err.message || err);
+      if (window.console && console.error) console.error('Apple Cinema Gold startup', err);
+      notify('Apple Cinema Gold: ошибка запуска оформления. Подробности в Консоли Lampa.');
+    }
   }
   window.AppleCinemaGold = {version:VERSION, diagnostics:diagnostics};
-  if (window.Lampa && Lampa.Listener && Lampa.Listener.follow) Lampa.Listener.follow('app', function (event) { if (event && event.type === 'ready') boot(); });
-  if (window.appready) boot();
-  else {
+  if (window.Lampa && Lampa.Listener && Lampa.Listener.follow) Lampa.Listener.follow('app', function (event) { if (event && event.type === 'ready') safeBoot(); });
+  if (window.appready) safeBoot();
+  if (!ready) {
     var attempts = 0, bootTimer = setInterval(function () {
-      if (window.appready && window.Lampa) { clearInterval(bootTimer); boot(); }
+      if (window.appready && window.Lampa) { safeBoot(); if (ready) clearInterval(bootTimer); }
       else if (++attempts >= 100) clearInterval(bootTimer);
     }, 200);
   }
